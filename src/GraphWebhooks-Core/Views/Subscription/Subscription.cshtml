@@ -1,0 +1,78 @@
+﻿<!--  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
+        See LICENSE in the source repository root for complete license information. -->
+
+@model Microsoft.Graph.Subscription
+
+@{
+    ViewBag.Title = "Subscription";
+}
+
+<h2>Subscription</h2>
+@if (Model != null)
+{
+    <p>The following subscription was successfully created.</p>
+    <div>
+        <table>
+            <tr>
+                <td>
+                    @Html.LabelFor(m => m.Resource, htmlAttributes: new { @class = "control-label col-md-2" })
+                </td>
+                <td>
+                    @Model.Resource
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    @Html.LabelFor(m => m.ChangeType, htmlAttributes: new { @class = "control-label col-md-2" })
+                </td>
+                <td>
+                    @Model.ChangeType
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    @Html.LabelFor(m => m.ClientState, htmlAttributes: new { @class = "control-label col-md-2" })
+                </td>
+                <td>
+                    @Model.ClientState
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    @Html.LabelFor(m => m.Id, htmlAttributes: new { @class = "control-label col-md-2" })
+                </td>
+                <td>
+                    @Model.Id
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    @Html.LabelFor(m => m.ExpirationDateTime, htmlAttributes: new { @class = "control-label col-md-2" })
+                </td>
+                <td>
+                    @Model.ExpirationDateTime
+                </td>
+            </tr>
+        </table>
+    </div>
+    <br />
+    <div>
+        @using (Html.BeginForm("Delete", "Subscription"))
+        {
+            @Html.Hidden("id", Model.Id)
+            <button type="submit">Delete subscription</button>
+        }
+    </div>
+    <br />
+    <br />
+    <div>
+        <h4>Watch for notifications</h4>
+        <p>Choose <b>Watch for notifications</b> and then send an email to your user. The <b>Notifications</b> page will display metadata for new messages.</p>
+        @using (Html.BeginForm("LoadView", "Notification"))
+        {
+            <button type="submit">Watch for notifications</button>
+        }
+    </div>
+}
+<br />
+<div hidden=@((ViewBag.Message == null) ? true : false)><b>@ViewBag.Message</b></div>

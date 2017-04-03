@@ -9,11 +9,20 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using GraphWebhooks_Core.Helpers;
+using Microsoft.Extensions.Options;
 
 namespace GraphWebhooks_Core.Controllers
 {
     public class AccountController : Controller
     {
+        private readonly AppSettings appSettings;
+
+        public AccountController(IOptions<AppSettings> optionsAccessor)
+        {
+            appSettings = optionsAccessor.Value;
+        }
+
         [HttpGet]
         public async Task SignIn()
         {
@@ -49,7 +58,7 @@ namespace GraphWebhooks_Core.Controllers
                 return View("Error");
             }
             // If the admin successfully granted permissions, continue to the Home page.
-            else if (admin_consent == "True" && tenant == User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid").Value)
+            else if (admin_consent == "True" && tenant == User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value)
             {
                 return RedirectToAction(nameof(HomeController.Index), "Home");
             }
@@ -61,9 +70,9 @@ namespace GraphWebhooks_Core.Controllers
         public ActionResult RequestPermissions()
         {
             string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
-            string redirectUri = System.Net.WebUtility.UrlEncode(Startup.BaseRedirectUri + "/Account/GrantPermissions");
+            string redirectUri = System.Net.WebUtility.UrlEncode(appSettings.BaseRedirectUri + "/Account/GrantPermissions");
             return new RedirectResult(
-                $"{ Startup.AADInstance }{ tenantId }/adminconsent?client_id={ Startup.AppId }&redirect_uri={ redirectUri }"
+                $"{ appSettings.AADInstance }{ tenantId }/adminconsent?client_id={ appSettings.AppId }&redirect_uri={ redirectUri }"
             );
         }
 

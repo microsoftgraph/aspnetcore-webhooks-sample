@@ -1,30 +1,29 @@
-﻿<!--  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
+<!--  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
         See LICENSE in the source repository root for complete license information. -->
 
-@model Microsoft.Graph.Message
+@model GraphWebhooks_Core.Models.MessageViewModel
 
 @{
     ViewBag.Title = "Notification";
-    string currentUserId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+    string CurrentUserId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+    string SubscriptionId = ViewBag.CurrentSubscriptionId;
 }
 
 @section Scripts {
-    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.2.0.min.js"></script>
-    <script src="https://ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.2.0.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.2.1.min.js"></script>
     <script src="/signalr/hubs"></script>
     <script>
         var connection = $.hubConnection();
         var hub = connection.createHubProxy("NotificationHub");
-        hub.on("showNotification", function (messages, subscribedUserId) {
-            if (subscribedUserId == '@currentUserId'.toString()) {   // Only show the current user's messages.
-                $.each(messages, function (index, value) {           // Iterate through the message collection
-                    var message = value;                             // Get current message
-
+        hub.on("showNotification", function (messages) {           
+            $.each(messages, function (index, current) {                     // Iterate through the message collection
+                if (current.SubscriberId === '@CurrentUserId'.toString()) {  // Only show the current user's messages.
+                    var message = current.Message;
 
                     var table = $("<table></table>");
                     var header = $("<th>Message</th>").appendTo(table);
 
-                    for (prop in message) {                          // Iterate through message properties
+                    for (prop in message) {                                  // Iterate through message properties
                         var property = message[prop];
                         var row = $("<tr></tr>");
 
@@ -34,20 +33,21 @@
                     }
                     $("#message").append(table);
                     $("#message").append("<br />");
-                });
-            }
+                }
+            });
         });
         connection.start();
     </script>
 }
 <h2>Messages</h2>
 <p>You'll get a notification when your user receives an email. The messages display below.</p>
-<p>&nbsp;&nbsp;<b>Note:</b> It may take several seconds for the page to update after the user receives a message.</p>
+<p><b>Note:</b> It may take several seconds for the page to update after the user receives a message.</p>
 <br />
 <div id="message"></div>
 <div>
     @using (Html.BeginForm("Delete", "Subscription"))
     {
+        @Html.Hidden("id", @SubscriptionId)
         <button type="submit">Delete subscription</button>
     }
 </div>

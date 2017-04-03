@@ -6,18 +6,18 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Infrastructure;
-using Microsoft.Graph;
+using GraphWebhooks_Core.Models;
 
 namespace GraphWebhooks_Core.SignalR
 {
     public class NotificationService : PersistentConnection
     {
-        public void SendNotificationToClient(IConnectionManager connectionManager, List<Message> messages, string userId)
+        public void SendNotificationToClient(IConnectionManager connectionManager, List<MessageViewModel> messages)
         {
             var hubContext = connectionManager.GetHubContext<NotificationHub>();
             if (hubContext != null)
             {
-                hubContext.Clients.All.showNotification(messages, userId);
+                hubContext.Clients.All.showNotification(messages);
             }
         }
     }

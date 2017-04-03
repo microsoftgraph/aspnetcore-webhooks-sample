@@ -13,6 +13,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using GraphWebhooks_Core.Helpers;
@@ -21,13 +22,13 @@ namespace GraphWebhooks_Core
 {
     public class Startup
     {
-        public static string AppId;
-        public static string AppSecret;
-        public static string AADInstance;
-        public static string GraphResourceId;
-        public static string BaseRedirectUri;
-        public static string NotificationUrl;
-        public static IMemoryCache Cache;
+        //public static string AppId;
+        //public static string AppSecret;
+        //public static string AADInstance;
+        //public static string GraphResourceId;
+        //public static string BaseRedirectUri;
+        //public static string NotificationUrl;
+        //public static IMemoryCache Cache;
 
         public Startup(IHostingEnvironment env)
         {
@@ -49,7 +50,14 @@ namespace GraphWebhooks_Core
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {
+        {        
+            
+            // Adds services required for using options.
+            services.AddOptions();
+
+            // Register the IConfiguration instance which AppOptions binds against.
+            services.Configure<AppSettings>(Configuration);
+
             // Add framework services.
             services.AddMvc();
 
@@ -59,10 +67,11 @@ namespace GraphWebhooks_Core
             services.AddAuthentication(
                 SharedOptions => SharedOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme);
 
-            // Add the sample's SampleAuthProvider and SDKHelper implementations.
+            // Add the sample's SampleAuthProvider, SDKHelper, and SubscriptionStore.
             services.AddSingleton<ISampleAuthProvider, SampleAuthProvider>();
             services.AddTransient<ISDKHelper, SDKHelper>();
-            
+            services.AddTransient<ISubscriptionStore, SubscriptionStore>();
+
             services.AddSignalR(
                 options => options.Hubs.EnableDetailedErrors = true);
         }
@@ -71,7 +80,8 @@ namespace GraphWebhooks_Core
         public void Configure(IApplicationBuilder app, 
                               IHostingEnvironment env, 
                               ILoggerFactory loggerFactory, 
-                              IMemoryCache cache)
+                              IMemoryCache cache,
+                              IOptions<AppSettings> options)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -88,16 +98,10 @@ namespace GraphWebhooks_Core
 
             app.UseStaticFiles();
 
-            // Populate Azure AD configuration values.
-            AADInstance = Configuration["Authentication:AzureAd:AADInstance"];
-            AppId = Configuration["Authentication:AzureAd:AppId"];
-            BaseRedirectUri = Configuration["Authentication:AzureAd:BaseRedirectUri"];
-
-            // Used later to get an access token and create a subscription.
-            // This sample uses a password (secret) to authenticate. Production apps should use a certificate.
-            AppSecret = Configuration["Authentication:AzureAd:AppSecret"];
-            GraphResourceId = Configuration["Authentication:AzureAd:GraphResourceId"]; 
-            NotificationUrl = Configuration["NotificationUrl"];
+            //// Populate Azure AD configuration values.
+            //AADInstance = Configuration["Authentication:AzureAd:AADInstance"];
+            //AppId = Configuration["Authentication:AzureAd:AppId"];
+            //BaseRedirectUri = Configuration["Authentication:AzureAd:BaseRedirectUri"];
             
             // Configure the OWIN pipeline to use cookie auth.
             app.UseCookieAuthentication(new CookieAuthenticationOptions
@@ -107,14 +111,14 @@ namespace GraphWebhooks_Core
 
             app.UseOpenIdConnectAuthentication(new OpenIdConnectOptions
             {
-                Authority = AADInstance + "common/v2.0",
-                ClientId = AppId,
+                Authority = options.Value.AADInstance + "common",
+                ClientId = options.Value.AppId,
                 ResponseType = OpenIdConnectResponseType.IdToken,
-                PostLogoutRedirectUri = BaseRedirectUri + Configuration["Authentication:AzureAd:CallbackPath"],
+                PostLogoutRedirectUri = options.Value.BaseRedirectUri + options.Value.CallbackPath,
                 Events = new OpenIdConnectEvents
                 {
                     OnRemoteFailure = OnAuthenticationFailed,
-                    OnTokenValidated = OnTokenValidated
+                    //OnTokenValidated = OnTokenValidated
                 },
                 TokenValidationParameters = new TokenValidationParameters
                 {
@@ -133,24 +137,24 @@ namespace GraphWebhooks_Core
             app.UseSignalR();
         }
 
-        // Custom logic for validating the token.
-        private Task OnTokenValidated(TokenValidatedContext context)
-        {
-            string tenantId = context.Ticket.Principal.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+        //// Custom logic for validating the token.
+        //private Task OnTokenValidated(TokenValidatedContext context)
+        //{
+        //    string tenantId = context.Ticket.Principal.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
 
-            // Make sure that the user didn't sign in with a personal Microsoft account.
-            if (tenantId == "9188040d-6c67-4c5b-b112-36a304b66dad")
-            {
-                context.HandleResponse();
-                context.Response.Redirect("Home/Error?message=MSA accounts not supported"); // TODO: NOT REDIRECTING
-            }
-            else
-            {
-                // Add more issuer validation logic, depending on your scenario.
-                // For example, validate that the tenant is in your db of approved tenants.
-            }
-            return Task.FromResult(0);
-        }
+        //    // Make sure that the user didn't sign in with a personal Microsoft account.
+        //    if (tenantId == "9188040d-6c67-4c5b-b112-36a304b66dad")
+        //    {
+        //        context.HandleResponse();
+        //        context.Response.Redirect("Home/Error?message=MSA accounts not supported"); // TODO: NOT REDIRECTING
+        //    }
+        //    else
+        //    {
+        //        // Add more issuer validation logic, depending on your scenario.
+        //        // For example, validate that the tenant is in your db of approved tenants.
+        //    }
+        //    return Task.FromResult(0);
+        //}
 
         // Handle sign-in errors differently than generic errors.
         private Task OnAuthenticationFailed(FailureContext context)

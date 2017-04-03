@@ -2,7 +2,7 @@
         See LICENSE in the source repository root for complete license information. -->
 
 @{
-    bool isAuthenticated = Context.User.Identity.IsAuthenticated;
+    bool isAuthenticated = User.Identity.IsAuthenticated;
 }
 
 <h2>Microsoft Graph Webhooks</h2>
@@ -19,6 +19,7 @@
         ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 4230, 0)
     }
     </pre>
+    <p>Microsoft Graph supports custom query parameters for the <b>NotificationUrl</b>.</p>
     <p>See the <a href="https://graph.microsoft.io/en-us/docs/api-reference/v1.0/resources/webhooks" target="_blank">Webhooks documentation</a> for more information about supported resources and change types.</p><br />
     @if (!isAuthenticated)
     {
@@ -28,7 +29,7 @@
     @if (isAuthenticated)
     {   
         <h4>Permissions</h4>
-        <p>This sample uses the OAuth2 client credentials flow and requires a tenant admin to authorize the app to access the mailboxes of all users in the tenant. The sample redirects to the <i>adminconsent</i> endpoint so an admin can consent to the <b>Mail.Read</b> application (app-only) permission. For more information about this auth flow, see <a href="https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-v2-protocols-oauth-client-creds" target="_blank">Azure Active Directory v2.0 and the OAuth 2.0 client credentials flow</a>.</p>
+        <p>This sample uses the OAuth2 client credentials flow and requires a tenant admin to authorize the app to access the mailboxes of all users in the tenant. The sample redirects to the <i>adminconsent</i> endpoint so an admin can consent to the <b>Mail.Read</b> application (app-only) permission.</p>
         <p>&nbsp;&nbsp;<b>Note:</b> Currently, only the messages, events, and contacts resources support application permissions for Microsoft Graph webhooks.</p><br />
         <h4>Get started</h4>
         <p>If you're a tenant admin, choose <b>Grant admin consent</b> to sign in with your admin credentials and approve the permissions request for the tenant. This is required only once per tenant.</p>

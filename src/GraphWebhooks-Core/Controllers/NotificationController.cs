@@ -9,7 +9,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR.Infrastructure;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Memory;
@@ -22,22 +21,22 @@ namespace GraphWebhooks_Core.Controllers
 {
     public class NotificationController : Controller
     {
-        private readonly IMemoryCache memoryCache;
         private readonly ISDKHelper sdkHelper;
+        private readonly ISubscriptionStore subscriptionStore;
         private readonly IConnectionManager connectionManager;
 
-        public NotificationController(IMemoryCache memoryCache, 
-                                      ISDKHelper sdkHelper, 
+        public NotificationController(ISDKHelper sdkHelper,
+                                      ISubscriptionStore subscriptionStore,
                                       IConnectionManager connectionManager)
         {
-            this.memoryCache = memoryCache;
             this.sdkHelper = sdkHelper;
+            this.subscriptionStore = subscriptionStore;
             this.connectionManager = connectionManager;
-
         }
 
-        public ActionResult LoadView()
+        public ActionResult LoadView(string id)
         {
+            ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
             return View("Notification");
         }
 
@@ -60,23 +59,24 @@ namespace GraphWebhooks_Core.Controllers
                 try
                 {
                     Dictionary<string, Notification> notifications = new Dictionary<string, Notification>();
-                    Tuple<string, string> subscriptionParams = null;
                     using (var inputStream = new System.IO.StreamReader(Request.Body))
                     {
                         JObject jsonObject = JObject.Parse(inputStream.ReadToEnd());
                         if (jsonObject != null)
                         {
-
-                            // Notifications are sent in a 'value' array.
+                            
+                            // Notifications are sent in a 'value' array. The array might contain multiple notifications for events that are
+                            // registered for the same notification endpoint, and that occur within a short timespan.
                             JArray value = JArray.Parse(jsonObject["value"].ToString());
                             foreach (var notification in value)
                             {
-                                Notification current = JsonConvert.DeserializeObject<Notification>(notification.ToString());  
-                                subscriptionParams = memoryCache.Get("subscriptionId_" + current.SubscriptionId) as Tuple<string, string>;
+                                Notification current = JsonConvert.DeserializeObject<Notification>(notification.ToString());
+                                SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(current.SubscriptionId);
                                 
                                 // Verify the current client state matches the one that was sent.
-                                if (current.ClientState == subscriptionParams?.Item1)
+                                if (current.ClientState == subscription.ClientState)
                                 {
+
                                     // Just keep the latest notification for each resource. No point pulling data more than once.
                                     notifications[current.Resource] = current;
                                 }
@@ -84,14 +84,16 @@ namespace GraphWebhooks_Core.Controllers
 
                             if (notifications.Count > 0)
                             {
+
                                 // Query for the changed messages. 
-                                await GetChangedMessagesAsync(notifications.Values, subscriptionParams?.Item2); //TODO: checking how notifications are bundled
+                                await GetChangedMessagesAsync(notifications.Values);
                             }
                         }
                     }
                 }
                 catch (Exception)
                 {
+
                     // TODO: Handle the exception.
                     // Still return a 202 so the service doesn't resend the notification.
                 }
@@ -101,25 +103,29 @@ namespace GraphWebhooks_Core.Controllers
 
         // Get information about the changed messages and send to browser via SignalR.
         // A production application would typically queue a background job for reliability.
-        private async Task GetChangedMessagesAsync(IEnumerable<Notification> notifications, string subscribedUserId)
+        private async Task GetChangedMessagesAsync(IEnumerable<Notification> notifications)
         {
-            List<Message> messages = new List<Message>();
+            List<MessageViewModel> messages = new List<MessageViewModel>();
             foreach (var notification in notifications)
             {
                 if (notification.ResourceData.ODataType != "#Microsoft.Graph.Message") continue;
-                string tenantCacheKey = notification.ClientState.Substring(0, notification.ClientState.IndexOf("__"));
+
+                SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
 
                 // Initialize the GraphServiceClient. This sample uses the tenant ID the cache key.
-                GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(tenantCacheKey);
+                GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(subscription.TenantId);
+
                 MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
+                Message message;
                 try
                 {
-                    messages.Add(await request.GetAsync());
+                    message = await request.GetAsync();
                 }
                 catch (Exception)
                 {
                     continue;
                 }
+                messages.Add(new MessageViewModel(message, subscription.UserId));
             }
             
             if (messages.Count > 0)
@@ -127,7 +133,7 @@ namespace GraphWebhooks_Core.Controllers
                 NotificationService notificationService = new NotificationService();
 
                 // Clients use the subscribedUserId to filter for messages that belong to the current user. 
-                notificationService.SendNotificationToClient(connectionManager, messages, subscribedUserId);
+                notificationService.SendNotificationToClient(connectionManager, messages);
             }
         }
     }

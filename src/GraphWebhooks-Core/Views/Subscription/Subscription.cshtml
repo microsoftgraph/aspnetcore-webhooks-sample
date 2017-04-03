@@ -70,6 +70,7 @@
         <p>Choose <b>Watch for notifications</b> and then send an email to your user. The <b>Notifications</b> page will display metadata for new messages.</p>
         @using (Html.BeginForm("LoadView", "Notification"))
         {
+            @Html.Hidden("id", Model.Id)
             <button type="submit">Watch for notifications</button>
         }
     </div>

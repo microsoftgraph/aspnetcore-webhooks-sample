@@ -6,34 +6,43 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Extensions.Options;
 
 namespace GraphWebhooks_Core.Helpers
 {
     public class SampleAuthProvider : ISampleAuthProvider
     {
         private readonly IMemoryCache memoryCache;
-
+        private readonly AppSettings appSettings;
+        
         // Properties used to get and manage an access token.
-        private string aadInstance = Startup.AADInstance;
-        private string appId = Startup.AppId;
-        private string appSecret = Startup.AppSecret;
-        private string graphResourceId = Startup.GraphResourceId;
+        private string aadInstance { get; set; }
+        private string appId { get; set; }
+        private string appSecret { get; set; }
+        private string graphResourceId { get; set; }
         private SampleTokenCache tokenCache;
         
-        public SampleAuthProvider(IMemoryCache memoryCache)
+        public SampleAuthProvider(IMemoryCache memoryCache,
+                                  IOptions<AppSettings> optionsAccessor)
         {
             this.memoryCache = memoryCache;
+            appSettings = optionsAccessor.Value;
+
+            aadInstance = appSettings.AADInstance;
+            appId = appSettings.AppId;
+            appSecret = appSettings.AppSecret;
+            graphResourceId = appSettings.GraphResourceId;
         }
 
         // Gets an access token. First tries to get the access token from the token cache.
-        // This sample uses `tenantId` as part of the cache key because the token is good for all users in the tenant.
+        // This sample uses a password (secret) to authenticate. Production apps should use a certificate.
         public async Task<string> GetUserAccessTokenAsync(string tenantId)
         {
             tokenCache = new SampleTokenCache(
                 tenantId,
                 memoryCache);
 
-            AuthenticationContext authContext = new AuthenticationContext($"{ aadInstance }{ tenantId }/v2.0", tokenCache);
+            AuthenticationContext authContext = new AuthenticationContext($"{ aadInstance }{ tenantId }", tokenCache);
             try
             {
                 AuthenticationResult authResult = await authContext.AcquireTokenAsync(

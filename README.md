@@ -1,19 +1,19 @@
 # Microsoft Graph Webhooks Sample for ASP.NET Core
 
-Subscribe for [Microsoft Graph webhooks](https://graph.microsoft.io/en-us/docs/api-reference/v1.0/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
+Subscribe for [Microsoft Graph webhooks](https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
 
-This sample ASP.NET Core web application shows how to subscribe for webhooks using application (app-only) permissions. It uses OpenID Connect for sign in, [Azure AD Authentication Library for .NET](https://github.com/AzureAD/azure-activedirectory-library-for-dotnet) (ADAL) to obtain an access token using the [client credentials grant](https://azure.microsoft.com/documentation/articles/active-directory-v2-protocols-oauth-client-creds), and the [Microsoft Graph Client Library for .NET](https://github.com/microsoftgraph/msgraph-sdk-dotnet) (SDK) to interact with Microsoft Graph. 
+This sample ASP.NET Core web application shows how to subscribe for webhooks using application (app-only) permissions. It uses OpenID Connect for sign in, [Azure AD Authentication Library for .NET](https://github.com/AzureAD/azure-activedirectory-library-for-dotnet) (ADAL) to obtain an access token using the [client credentials grant](https://tools.ietf.org/html/rfc6749#section-4.4), and the [Microsoft Graph Client Library for .NET](https://github.com/microsoftgraph/msgraph-sdk-dotnet) (SDK) to interact with Microsoft Graph. 
 
 >Currently, only Outlook messages, events, and contacts resources support application permissions. Application permissions are not yet supported for Group conversations or OneDrive drive root items.
 
-The sample app redirects to the Azure AD v2.0 *adminconsent* endpoint so a tenant administrator can grant application permissions directly to the app. After the admin consents, users in the tenant can create a subscription and watch for notifications. 
+The sample app redirects to the Azure AD *adminconsent* endpoint so a tenant administrator can grant application permissions directly to the app. After the admin consents, users in the tenant can create a subscription and watch for notifications. 
 
 **Note:** Although individual users initiate the subscription process for their own user account, the access token that's used to create the subscription carries an application-level role, not a user-level scope.
 
 The following are common tasks that an application performs with webhooks subscriptions:
 
 - Get consent to subscribe to users' resources and then get an access token.
-- Use the access token to [create a subscription](https://graph.microsoft.io/en-us/docs/api-reference/v1.0/api/subscription_post_subscriptions) to a resource.
+- Use the access token to [create a subscription](https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/subscription_post_subscriptions) to a resource.
 - Send back a validation token to confirm the notification URL.
 - Listen for notifications from Microsoft Graph and respond with a 202 status code.
 - Request more information about changed resources using data in the notification.
@@ -34,45 +34,60 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 
 - Visual Studio 2015 installed on your development computer. 
 - A [work or school account](https://dev.office.com/devprogram). A tenant administrator account is required to grant application permissions. 
-- The application ID and key from the application that you [register on the Microsoft Portal](#register-the-app). 
+- The application ID and key from the application that you [register on the Azure Portal](#register-the-app). 
 - A public HTTPS endpoint to receive and send HTTP requests. You can host this on Microsoft Azure or another service, or you can [use ngrok](#ngrok) or a similar tool while testing.
 
 ### Register the app
 
-This app uses the v2.0 Azure AD endpoint, so you'll register it in the Microsoft Application Registration Portal.
+This app uses the Azure AD endpoint, so you'll register it in the [Azure Portal](https://portal.azure.com/).
 
->Note: MSA support????????????????
+1. Sign in to the portal using your work or school account.
 
-1. Sign into the [Application Registration Portal](https://apps.dev.microsoft.com/#/appList) using either your personal or work or school account.
+2. Choose **Azure Active Directory** in the left-hand navigation pane.
 
-2. Choose **Add an app**.
+3. Choose **App registrations**, and then choose **Add**.  
 
-3. Enter a name for the app, and choose **Create application**. 
-	
-   The registration page displays, listing the properties of your app.
+4. Enter a name for the app, and choose **Create application**. 
 
-4. Copy the Application Id. This is the unique identifier for your app. 
+   a. Enter a friendly name for the application.
 
-   You'll use the application ID and the password that you generate in the next step to configure the sample app. 
+   b. Choose 'Web app/API' as the **Application Type**.
 
-5. Under **Application Secrets**, choose **Generate New Password**. Copy the password from the **New password generated** dialog.
+   c. Enter *https://localhost:44334/signin-oidc* for the **Sign-on URL**. This is the base callback URL for this sample.
+  
+   d. Click **Create**.
 
-   Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password.
+5. Choose your new application from the list of registered applications.
 
-6. Under **Platforms**, choose **Add Platform** > **Web**.
+6. Copy and store the Application ID. This value is shown in the **Essentials** pane or in **Settings** > **Properties**.
 
-7. Add the following Redirect URIs. The first is the base callback URL for this sample. The second is the callback for the *adminconsent* endpoint. 
+7. Open **Settings** > **Properties**, choose **Reply URLs** and add `https://localhost:44316/Account/GrantPermissions` as a second redirect URI. This is the callback for the *adminconsent* endpoint.  
 
+   The sample will have two redirect URIs: 
     - https://localhost:44334/signin-oidc 
     - https://localhost:44316/Account/GrantPermissions
 
-   Make sure the **Allow Implicit Flow** check box is selected. This option enables the hybrid flow that allows the app to receive sign-in info (the id_token) during authentication.
+8. To enable multi-tenanted support for the app, set **Multi-tenanted** to **Yes**.
 
-8. Under **Microsoft Graph Permissions** > **Application Permissions**, choose **Add** and then select *Mail.Read*. 
+9. Configure Permissions for your application:  
 
-   Keep the *User.Read* delegated permission so users can sign into the app to initiate the subscription process.
+   a. Choose **Settings** > **Required permissions** > **Add**.
+  
+   b. Choose **Select an API** > **Microsoft Graph**, and then click **Select**.
+  
+   c. Choose **Select permissions**. Under **Application Permissions**, choose **Read user mail**, and then click **Select**.
+  
+   d. Click **Done**.
 
-9. Choose **Save**.
+   Keep the *User.Read* delegated permission for Azure Active Directory so users can sign into the app to initiate the subscription process.
+
+10. Choose **Settings** > **Keys**. Enter a description, choose a duration for the key, and then click **Save**.
+
+   Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password.
+
+11. **Important**: Copy the key value--this is your app's secret. You won't be able to access this value again after you leave this blade.
+
+You'll use the application ID and secret to configure the app in Visual Studio.
 
 
 <a name="ngrok"></a>
@@ -93,9 +108,7 @@ You can use the ngrok web interface (_http://127.0.0.1:4040_) to inspect the HTT
 
 1. Replace the two *\<port-number\>* placeholder values in the following command with the port number you copied, and then run the command in the ngrok console.
 
-   ```
-ngrok http <port-number> -host-header=localhost:<port-number>
-   ```
+   `ngrok http <port-number> -host-header=localhost:<port-number>`
 
 	![Example command to run in the ngrok console](readme-images/ngrok1.PNG)
 
@@ -116,14 +129,12 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 1. In Solution Explorer, open the **Web.config** file in the root directory of the project.  
    a. For the **AppId** key, replace *ENTER_YOUR_APP_ID* with the application ID of your registered Azure application.  
-   b. For the **AppSecret** key, replace *ENTER_YOUR_SECRET* with the key of your registered Azure application.  
+   b. For the **AppSecret** key, replace *ENTER_YOUR_SECRET* with the key of your registered Azure application. Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password. 
    c. For the **NotificationUrl** key, replace *ENTER_YOUR_URL* with the HTTPS URL. Keep the */notification/listen* portion. 
    
    If you're using ngrok, use the HTTPS URL that you copied. The value will look something like this:
 
-   ```
-"NotificationUrl": "https://2885f9c5.ngrok.io/notification/listen",
-   ```
+   `"NotificationUrl": "https://2885f9c5.ngrok.io/notification/listen",`
 
 1. Make sure that the ngrok console is still running, then press F5 to build and run the solution in debug mode. 
 
@@ -168,6 +179,10 @@ The following files contain code that's related to connecting to Microsoft Graph
 **Helpers**  
 - [`SampleAuthProvider.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/SampleAuthProvider.cs) Gets an access token using ADAL's **AcquireTokenAsync** method.
 - [`SDKHelper.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/SDKHelper.cs) Initiates the SDK client used to interact with Microsoft Graph.
+- [`SubscriptionStore.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/SubscriptionStore.cs) Access layer for stored subscription information. The sample implementation temporarily stores the info in HttpRuntime.Cache. Production apps will typically use some method of persistent storage.
+
+**TokenStorage**
+- [`SampleTokenCache.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/TokenStorage/SampleTokenCache.cs) Sample implementation of an in-memory token cache. Production apps will typically use some method of persistent storage. 
 
 ## Troubleshooting 
 
@@ -196,9 +211,9 @@ You can suggest changes for Microsoft Graph on [GitHub](https://github.com/micro
 
 - [Microsoft Graph Webhooks sample for ASP.NET 4.6](https://github.com/microsoftgraph/aspnet-webhooks-rest-sample) (Delegated permissions)
 - [Microsoft Graph Webhooks sample for Node.js](https://github.com/microsoftgraph/nodejs-webhooks-rest-sample) (Delegated permissions)
-- [Working with Webhooks in Microsoft Graph](https://graph.microsoft.io/en-us/docs/api-reference/v1.0/resources/webhooks)
-- [Subscription resource](https://graph.microsoft.io/en-us/docs/api-reference/v1.0/resources/subscription)
-- [Microsoft Graph documentation](https://graph.microsoft.io/)
+- [Working with Webhooks in Microsoft Graph](https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/webhooks)
+- [Subscription resource](https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/subscription)
+- [Microsoft Graph documentation](https://developer.microsoft.com/graph)
 
 ## Copyright
 Copyright (c) 2017 Microsoft. All rights reserved.

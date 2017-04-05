@@ -61,13 +61,15 @@ This app uses the Azure AD endpoint, so you'll register it in the [Azure Portal]
 
 6. Copy and store the Application ID. This value is shown in the **Essentials** pane or in **Settings** > **Properties**.
 
-7. Open **Settings** > **Properties**, choose **Reply URLs** and add `https://localhost:44316/Account/GrantPermissions` as a second redirect URI. This is the callback for the *adminconsent* endpoint.  
+7. Optional. To enable multi-tenanted support for the app, open **Settings** > **Properties** and set **Multi-tenanted** to **Yes**.
 
-   The sample will have two redirect URIs: 
+8. Open **Settings** > **Reply URLs** and add the following redirect URI:
+
+   `https://localhost:44334/Account/GrantPermissions` 
+
+   This is the callback for the *adminconsent* endpoint. The sample will have two redirect URIs: 
     - https://localhost:44334/signin-oidc 
-    - https://localhost:44316/Account/GrantPermissions
-
-8. To enable multi-tenanted support for the app, set **Multi-tenanted** to **Yes**.
+    - https://localhost:44334/Account/GrantPermissions
 
 9. Configure Permissions for your application:  
 
@@ -75,7 +77,7 @@ This app uses the Azure AD endpoint, so you'll register it in the [Azure Portal]
   
    b. Choose **Select an API** > **Microsoft Graph**, and then click **Select**.
   
-   c. Choose **Select permissions**. Under **Application Permissions**, choose **Read user mail**, and then click **Select**.
+   c. Choose **Select permissions**. Under **Application Permissions**, choose **Read mail in all mailboxes**, and then click **Select**.
   
    d. Click **Done**.
 
@@ -83,9 +85,9 @@ This app uses the Azure AD endpoint, so you'll register it in the [Azure Portal]
 
 10. Choose **Settings** > **Keys**. Enter a description, choose a duration for the key, and then click **Save**.
 
-   Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password.
+   >**Important**: Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password.
 
-11. **Important**: Copy the key value--this is your app's secret. You won't be able to access this value again after you leave this blade.
+11. Copy the key value--this is your app's secret. You won't be able to access this value again after you leave this blade.
 
 You'll use the application ID and secret to configure the app in Visual Studio.
 
@@ -94,7 +96,7 @@ You'll use the application ID and secret to configure the app in Visual Studio.
 ### Set up the ngrok proxy (optional) 
 You must expose a public HTTPS endpoint to create a subscription and receive notifications from Microsoft Graph. While testing, you can use ngrok to temporarily allow messages from Microsoft Graph to tunnel to a *localhost* port on your computer. 
 
-You can use the ngrok web interface (_http://127.0.0.1:4040_) to inspect the HTTP traffic that passes through the tunnel. To learn more about using ngrok, see the [ngrok website](https://ngrok.com/).  
+You can use the ngrok web interface (http://127.0.0.1:4040) to inspect the HTTP traffic that passes through the tunnel. To learn more about using ngrok, see the [ngrok website](https://ngrok.com/).  
 
 1. In Solution Explorer, right-click the **GraphWebhooks-Core** project and choose **Properties**. 
 
@@ -106,9 +108,9 @@ You can use the ngrok web interface (_http://127.0.0.1:4040_) to inspect the HTT
 
 1. Unzip the package and run ngrok.exe.
 
-1. Replace the two *\<port-number\>* placeholder values in the following command with the port number you copied, and then run the command in the ngrok console.
+1. Replace the two *{port-number}* placeholder values in the following command with the port number you copied, and then run the command in the ngrok console.
 
-   `ngrok http <port-number> -host-header=localhost:<port-number>`
+   `ngrok http {port-number} -host-header=localhost:{port-number}`
 
 	![Example command to run in the ngrok console](readme-images/ngrok1.PNG)
 
@@ -127,7 +129,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 1. Open the **GraphWebhooks-Core.sln** sample file in Visual Studio 2015. 
 
-1. In Solution Explorer, open the **Web.config** file in the root directory of the project.  
+1. In Solution Explorer, open the **appsettings.json** file in the root directory of the project.  
    a. For the **AppId** key, replace *ENTER_YOUR_APP_ID* with the application ID of your registered Azure application.  
    b. For the **AppSecret** key, replace *ENTER_YOUR_SECRET* with the key of your registered Azure application. Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password. 
    c. For the **NotificationUrl** key, replace *ENTER_YOUR_URL* with the HTTPS URL. Keep the */notification/listen* portion. 
@@ -179,7 +181,7 @@ The following files contain code that's related to connecting to Microsoft Graph
 **Helpers**  
 - [`SampleAuthProvider.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/SampleAuthProvider.cs) Gets an access token using ADAL's **AcquireTokenAsync** method.
 - [`SDKHelper.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/SDKHelper.cs) Initiates the SDK client used to interact with Microsoft Graph.
-- [`SubscriptionStore.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/SubscriptionStore.cs) Access layer for stored subscription information. The sample implementation temporarily stores the info in HttpRuntime.Cache. Production apps will typically use some method of persistent storage.
+- [`SubscriptionStore.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/SubscriptionStore.cs) Access layer for stored subscription information. The sample temporarily stores the info in HttpRuntime.Cache. Production apps will typically use some method of persistent storage.
 
 **TokenStorage**
 - [`SampleTokenCache.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/TokenStorage/SampleTokenCache.cs) Sample implementation of an in-memory token cache. Production apps will typically use some method of persistent storage. 

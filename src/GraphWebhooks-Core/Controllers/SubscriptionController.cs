@@ -79,6 +79,7 @@ namespace GraphWebhooks_Core.Controllers
             {
 
                 // If a tenant admin hasn't granted consent, this operation returns an Unauthorized error.
+                // This sample caches the initial unauthorized token, so you'll need to start a new browser session.
                 ViewBag.Message = BuildErrorMessage(e); 
                 return View("Error");
             }

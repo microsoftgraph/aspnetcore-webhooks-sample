@@ -11,6 +11,7 @@ namespace GraphWebhooks_Core
 {
 
     // This sample uses an in-memory cache. Production apps will typically use some method of persistent storage.
+    // For more information, see http://www.cloudidentity.com/blog/2014/07/09/the-new-token-cache-in-adal-v2/
     public class SampleTokenCache : TokenCache
     {
         private static readonly object FileLock = new object();

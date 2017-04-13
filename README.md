@@ -45,7 +45,7 @@ This app uses the Azure AD endpoint, so you'll register it in the [Azure Portal]
 
 2. Choose **Azure Active Directory** in the left-hand navigation pane.
 
-3. Choose **App registrations**, and then choose **Add**.  
+3. Choose **App registrations**, and then choose **New application registration**.  
 
 4. Enter a name for the app, and choose **Create application**. 
 
@@ -140,6 +140,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 1. Make sure that the ngrok console is still running, then press F5 to build and run the solution in debug mode. 
 
+   >If you get errors while installing packages, make sure the local path where you placed the solution is not too long/deep. Moving the solution closer to the root drive resolves this issue.
 
 ### Use the app to create a subscription
  
@@ -151,7 +152,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 1. Sign in as a tenant admin and consent to the **Read mail in all mailboxes** and **Sign in and read user profile** permissions. You'll be redirected back to the sample's home page. 
 
-   At this point, any user in your tenant can sign in and create a subscription.
+   At this point, any user in your tenant can sign in and create a subscription. If you don't grant admin permissions first, you'll receive an *Unauthorized* error. You'll need to open the sample in a new browser session because this sample caches the initial token.
     
 1. Choose **Create subscription**. The **Subscription** page loads with information about the subscription.
 
@@ -193,6 +194,7 @@ The following files contain code that's related to connecting to Microsoft Graph
 | You get a 403 Forbidden response when you attempt to create a subscription. | Make sure that your app registration includes the **Mail.Read** application permission for Microsoft Graph (as described in the [Register the app](#register-the-app) section) and that a tenant administrator has granted consent to the app. |  
 | You do not receive notifications. | If you're using ngrok, you can use the web interface (http://127.0.0.1:4040) to see whether the notification is being received. If you're not using ngrok, monitor the network traffic using the tools your hosting service provides, or try using ngrok.<br />If Microsoft Graph is not sending notifications, please open a [Stack Overflow](https://stackoverflow.com/questions/tagged/MicrosoftGraph) issue tagged *[MicrosoftGraph]*. Include the subscription ID, the time it was created, and the request ID from the response (if you have it).<br /><br />Known issue: Occasionally the notification is received, and the retrieved message is sent to NotificationService, but the SignalR client in this sample does not update. When this happens, it's usually the first notification after the subscription is created. |  
 | You get a *Subscription validation request timed out* response. | This indicates that Microsoft Graph did not receive a validation reponse within 10 seconds.<br /><br />If you're using ngrok, make sure that your endpoint is accessible and that you specified your project's HTTP port for the tunnel (not HTTPS). |  
+| You get errors while installing packages. | Make sure the local path where you placed the solution is not too long/deep. Moving the solution closer to the root drive resolves this issue. |
 | The app opens to a *Server Error in '/' Application. The resource cannot be found.* browser page. | Make sure that a CSHTML view file isn't the active tab when you run the app from Visual Studio. |
 
 ## Contributing

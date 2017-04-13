@@ -17,6 +17,7 @@ namespace GraphWebhooks_Core.Helpers
         public string UserId { get; set; }
         public string TenantId { get; set; }
 
+        // Dependency injection constructor.
         public SubscriptionStore(IMemoryCache memoryCache)
         {
             this.memoryCache = memoryCache;

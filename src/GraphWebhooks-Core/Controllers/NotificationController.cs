@@ -8,14 +8,15 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR.Infrastructure;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
 using GraphWebhooks_Core.Helpers;
 using GraphWebhooks_Core.Models;
 using GraphWebhooks_Core.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace GraphWebhooks_Core.Controllers
 {
@@ -24,16 +25,20 @@ namespace GraphWebhooks_Core.Controllers
         private readonly ISDKHelper sdkHelper;
         private readonly ISubscriptionStore subscriptionStore;
         private readonly IConnectionManager connectionManager;
+        private readonly ILogger logger;
 
         public NotificationController(ISDKHelper sdkHelper,
                                       ISubscriptionStore subscriptionStore,
-                                      IConnectionManager connectionManager)
+                                      IConnectionManager connectionManager,
+                                      ILogger<NotificationController> logger)
         {
             this.sdkHelper = sdkHelper;
             this.subscriptionStore = subscriptionStore;
             this.connectionManager = connectionManager;
+            this.logger = logger;
         }
 
+        [Authorize]
         public ActionResult LoadView(string id)
         {
             ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
@@ -91,10 +96,11 @@ namespace GraphWebhooks_Core.Controllers
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    logger.LogError($"ParsingNotification: { ex.Message }");
 
-                    // TODO: Handle the exception.
+                    // TODO: Handle the exception. 
                     // Still return a 202 so the service doesn't resend the notification.
                 }
                 return new StatusCodeResult(202);
@@ -116,16 +122,18 @@ namespace GraphWebhooks_Core.Controllers
                 GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(subscription.TenantId);
 
                 MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
-                Message message;
                 try
                 {
-                    message = await request.GetAsync();
+                    messages.Add(new MessageViewModel(await request.GetAsync(), subscription.UserId));
                 }
-                catch (Exception)
+                catch (ServiceException se)
                 {
-                    continue;
+                    string errorMessage = se.Error.Message;
+                    string requestId = se.Error.InnerError.AdditionalData["request-id"].ToString();
+                    string requestDate = se.Error.InnerError.AdditionalData["date"].ToString();
+
+                    logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
                 }
-                messages.Add(new MessageViewModel(message, subscription.UserId));
             }
             
             if (messages.Count > 0)

@@ -131,7 +131,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 1. In Solution Explorer, open the **appsettings.json** file in the root directory of the project.  
    a. For the **AppId** key, replace *ENTER_YOUR_APP_ID* with the application ID of your registered Azure application.  
-   b. For the **AppSecret** key, replace *ENTER_YOUR_SECRET* with the key of your registered Azure application. Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password. 
+   b. For the **AppSecret** key, replace *ENTER_YOUR_SECRET* with the key of your registered Azure application. Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password.  
    c. For the **NotificationUrl** key, replace *ENTER_YOUR_URL* with the HTTPS URL. Keep the */notification/listen* portion. 
    
    If you're using ngrok, use the HTTPS URL that you copied. The value will look something like this:
@@ -156,9 +156,11 @@ Keep the console open while testing. If you close it, the tunnel also closes and
     
 1. Choose **Create subscription**. The **Subscription** page loads with information about the subscription.
 
+   >This sample sets the subscription expiration to 15 minutes for testing purposes.
+
 	![App page showing properties of the new subscription](readme-images/Page2.PNG)
 	
-1. Choose the **Watch for notifications** button.
+1. Choose the **Watch for notifications** button. 
 
 1. Send an email to your user account. The **Notification** page displays message properties. It may take several seconds for the page to update.
 

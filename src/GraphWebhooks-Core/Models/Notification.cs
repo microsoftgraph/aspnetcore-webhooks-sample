@@ -5,6 +5,7 @@
 
 using System;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace GraphWebhooks_Core.Models
 {
@@ -15,11 +16,13 @@ namespace GraphWebhooks_Core.Models
         [JsonProperty(PropertyName = "changeType")]
         public string ChangeType { get; set; }
 
-        // The client state used to verify that the notification is from Microsoft Graph. Compare the value received with the notification to the value you sent with the subscription request.
+        // The client state used to verify that the notification is from Microsoft Graph.
+        // Compare the value received with the notification to the value you sent with the subscription request.
         [JsonProperty(PropertyName = "clientState")]
         public string ClientState { get; set; }
 
-        // The endpoint of the resource that changed. For example, the `messages` resource uses the format ../Users/{user-id}/Messages/{message-id}
+        // The endpoint of the resource that changed.
+        // For example, the `messages` resource uses the format `../Users/{user-id}/Messages/{message-id}`
         [JsonProperty(PropertyName = "resource")]
         public string Resource { get; set; }
 
@@ -34,6 +37,10 @@ namespace GraphWebhooks_Core.Models
         // Properties of the changed resource.
         [JsonProperty(PropertyName = "resourceData")]
         public ResourceData ResourceData { get; set; }
+
+        // Property bag for unknown properties. 
+        [JsonExtensionData(ReadData = true)]
+        public IDictionary<string, object> AdditionalData { get; set; }
     }
 
     public class ResourceData

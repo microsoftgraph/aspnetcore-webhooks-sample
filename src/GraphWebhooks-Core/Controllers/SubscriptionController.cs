@@ -55,7 +55,7 @@ namespace GraphWebhooks_Core.Controllers
                     NotificationUrl = appSettings.NotificationUrl,
                     ClientState = clientState,
                     //ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 4230, 0) // current maximum lifespan for messages
-                    ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 10, 0)     // shorter duration useful for testing
+                    ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 15, 0)     // shorter duration useful for testing
                 });
 
                 // Verify client state, then store the subscription ID and client state to validate incoming notifications.
@@ -79,6 +79,7 @@ namespace GraphWebhooks_Core.Controllers
             {
 
                 // If a tenant admin hasn't granted consent, this operation returns an Unauthorized error.
+                // This sample caches the initial unauthorized token, so you'll need to start a new browser session.
                 ViewBag.Message = BuildErrorMessage(e); 
                 return View("Error");
             }

@@ -22,6 +22,7 @@ namespace GraphWebhooks_Core.Helpers
         private string graphResourceId { get; set; }
         private SampleTokenCache tokenCache;
         
+        // Dependency injection constructor.
         public SampleAuthProvider(IMemoryCache memoryCache,
                                   IOptions<AppSettings> optionsAccessor)
         {

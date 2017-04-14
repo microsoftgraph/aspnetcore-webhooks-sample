@@ -22,14 +22,6 @@ namespace GraphWebhooks_Core
 {
     public class Startup
     {
-        //public static string AppId;
-        //public static string AppSecret;
-        //public static string AADInstance;
-        //public static string GraphResourceId;
-        //public static string BaseRedirectUri;
-        //public static string NotificationUrl;
-        //public static IMemoryCache Cache;
-
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -39,8 +31,8 @@ namespace GraphWebhooks_Core
 
             if (env.IsDevelopment())
             {
-                // For more details on using the user secret store see http://go.microsoft.com/fwlink/?LinkID=532709
-                builder.AddUserSecrets();
+
+                // For details on using the user secret store see http://go.microsoft.com/fwlink/?LinkID=532709
             }
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
@@ -97,11 +89,6 @@ namespace GraphWebhooks_Core
             }
 
             app.UseStaticFiles();
-
-            //// Populate Azure AD configuration values.
-            //AADInstance = Configuration["Authentication:AzureAd:AADInstance"];
-            //AppId = Configuration["Authentication:AzureAd:AppId"];
-            //BaseRedirectUri = Configuration["Authentication:AzureAd:BaseRedirectUri"];
             
             // Configure the OWIN pipeline to use cookie auth.
             app.UseCookieAuthentication(new CookieAuthenticationOptions
@@ -117,8 +104,7 @@ namespace GraphWebhooks_Core
                 PostLogoutRedirectUri = options.Value.BaseRedirectUri + options.Value.CallbackPath,
                 Events = new OpenIdConnectEvents
                 {
-                    OnRemoteFailure = OnAuthenticationFailed,
-                    //OnTokenValidated = OnTokenValidated
+                    OnRemoteFailure = OnAuthenticationFailed
                 },
                 TokenValidationParameters = new TokenValidationParameters
                 {
@@ -136,25 +122,6 @@ namespace GraphWebhooks_Core
 
             app.UseSignalR();
         }
-
-        //// Custom logic for validating the token.
-        //private Task OnTokenValidated(TokenValidatedContext context)
-        //{
-        //    string tenantId = context.Ticket.Principal.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
-
-        //    // Make sure that the user didn't sign in with a personal Microsoft account.
-        //    if (tenantId == "9188040d-6c67-4c5b-b112-36a304b66dad")
-        //    {
-        //        context.HandleResponse();
-        //        context.Response.Redirect("Home/Error?message=MSA accounts not supported"); // TODO: NOT REDIRECTING
-        //    }
-        //    else
-        //    {
-        //        // Add more issuer validation logic, depending on your scenario.
-        //        // For example, validate that the tenant is in your db of approved tenants.
-        //    }
-        //    return Task.FromResult(0);
-        //}
 
         // Handle sign-in errors differently than generic errors.
         private Task OnAuthenticationFailed(FailureContext context)

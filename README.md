@@ -211,7 +211,7 @@ We'd love to get your feedback about the Microsoft Graph Webhooks sample for ASP
 
 Questions about Microsoft Graph in general should be posted to [Stack Overflow](https://stackoverflow.com/questions/tagged/MicrosoftGraph). Make sure that your questions or comments are tagged with *[MicrosoftGraph]*.
 
-You can suggest changes for Microsoft Graph on [GitHub](https://github.com/microsoftgraph/microsoft-graph-docs).
+You can suggest changes for Microsoft Graph on [UserVoice](https://officespdev.uservoice.com/).
 
 ## Additional resources
 

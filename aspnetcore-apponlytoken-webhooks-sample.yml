@@ -1,0 +1,21 @@
+### YamlMime:Sample
+sample:
+- name: Microsoft Graph Webhooks Sample for ASP.NET Core
+  path: ''
+  description: This sample shows how to subscribe for Microsoft Graph webhooks using application (app-only) permissions and the Azure AD endpoint.
+  readme: ''
+  generateZip: FALSE
+  isLive: TRUE
+  technologies:
+  - Microsoft Graph webhooks
+  - Azure AD
+  azureDeploy: ''
+  author: jamescro
+  platforms: []
+  languages:
+  - C#
+  extensions:
+    products:
+    - Outlook
+    - Office 365
+    scenarios: []

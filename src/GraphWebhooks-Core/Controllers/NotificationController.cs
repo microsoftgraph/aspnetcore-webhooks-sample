@@ -10,31 +10,30 @@ using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR.Infrastructure;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Graph;
 using GraphWebhooks_Core.Helpers;
 using GraphWebhooks_Core.Models;
 using GraphWebhooks_Core.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-
 namespace GraphWebhooks_Core.Controllers
 {
     public class NotificationController : Controller
     {
         private readonly ISDKHelper sdkHelper;
         private readonly ISubscriptionStore subscriptionStore;
-        private readonly IConnectionManager connectionManager;
+        private readonly IHubContext<NotificationHub> notificationHub;
         private readonly ILogger logger;
 
         public NotificationController(ISDKHelper sdkHelper,
                                       ISubscriptionStore subscriptionStore,
-                                      IConnectionManager connectionManager,
+                                      IHubContext<NotificationHub> notificationHub,
                                       ILogger<NotificationController> logger)
         {
             this.sdkHelper = sdkHelper;
             this.subscriptionStore = subscriptionStore;
-            this.connectionManager = connectionManager;
+            this.notificationHub = notificationHub;
             this.logger = logger;
         }
 
@@ -54,7 +53,7 @@ namespace GraphWebhooks_Core.Controllers
             // This response is required for each subscription.
             var query = QueryHelpers.ParseQuery(Request.QueryString.ToString());
             if (query.ContainsKey("validationToken"))
-            {                
+            {
                 return Content(query["validationToken"], "plain/text");
             }
 
@@ -69,7 +68,7 @@ namespace GraphWebhooks_Core.Controllers
                         JObject jsonObject = JObject.Parse(inputStream.ReadToEnd());
                         if (jsonObject != null)
                         {
-                            
+
                             // Notifications are sent in a 'value' array. The array might contain multiple notifications for events that are
                             // registered for the same notification endpoint, and that occur within a short timespan.
                             JArray value = JArray.Parse(jsonObject["value"].ToString());
@@ -77,7 +76,7 @@ namespace GraphWebhooks_Core.Controllers
                             {
                                 Notification current = JsonConvert.DeserializeObject<Notification>(notification.ToString());
                                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(current.SubscriptionId);
-                                
+
                                 // Verify the current client state matches the one that was sent.
                                 if (current.ClientState == subscription.ClientState)
                                 {
@@ -135,13 +134,11 @@ namespace GraphWebhooks_Core.Controllers
                     logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
                 }
             }
-            
+
             if (messages.Count > 0)
             {
                 NotificationService notificationService = new NotificationService();
-
-                // Clients use the subscribedUserId to filter for messages that belong to the current user. 
-                notificationService.SendNotificationToClient(connectionManager, messages);
+                await notificationService.SendNotificationToClient(this.notificationHub, messages);
             }
         }
     }

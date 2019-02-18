@@ -9,6 +9,6 @@ namespace GraphWebhooks_Core.SignalR
 {
     public class NotificationHub : Hub
     {
-
+       
     }
 }

@@ -17,6 +17,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using GraphWebhooks_Core.Helpers;
+using GraphWebhooks_Core.SignalR;
+using Microsoft.AspNetCore.Http;
 
 namespace GraphWebhooks_Core
 {
@@ -42,8 +44,8 @@ namespace GraphWebhooks_Core
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {        
-            
+        {
+
             // Adds services required for using options.
             services.AddOptions();
 
@@ -55,9 +57,13 @@ namespace GraphWebhooks_Core
 
             // This sample uses an in-memory cache for tokens and subscriptions. Production apps will typically use some method of persistent storage.
             services.AddMemoryCache();
-            
+
+            // Configure the OWIN pipeline to use cookie auth.
             services.AddAuthentication(
-                SharedOptions => SharedOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme);
+                    SharedOptions =>
+                        SharedOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options => { })
+                .AddOpenIdConnect(options => { });
 
             // Add the sample's SampleAuthProvider, SDKHelper, and SubscriptionStore.
             services.AddSingleton<ISampleAuthProvider, SampleAuthProvider>();
@@ -65,13 +71,13 @@ namespace GraphWebhooks_Core
             services.AddTransient<ISubscriptionStore, SubscriptionStore>();
 
             services.AddSignalR(
-                options => options.Hubs.EnableDetailedErrors = true);
+                options => options.EnableDetailedErrors = true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, 
-                              IHostingEnvironment env, 
-                              ILoggerFactory loggerFactory, 
+        public void Configure(IApplicationBuilder app,
+                              IHostingEnvironment env,
+                              ILoggerFactory loggerFactory,
                               IMemoryCache cache,
                               IOptions<AppSettings> options)
         {
@@ -89,29 +95,6 @@ namespace GraphWebhooks_Core
             }
 
             app.UseStaticFiles();
-            
-            // Configure the OWIN pipeline to use cookie auth.
-            app.UseCookieAuthentication(new CookieAuthenticationOptions
-            {
-                AutomaticAuthenticate = true,
-            });
-
-            app.UseOpenIdConnectAuthentication(new OpenIdConnectOptions
-            {
-                Authority = options.Value.AADInstance + "common",
-                ClientId = options.Value.AppId,
-                ResponseType = OpenIdConnectResponseType.IdToken,
-                PostLogoutRedirectUri = options.Value.BaseRedirectUri + options.Value.CallbackPath,
-                Events = new OpenIdConnectEvents
-                {
-                    OnRemoteFailure = OnAuthenticationFailed
-                },
-                TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = false,
-                    NameClaimType = "name"
-                }
-            });
 
             app.UseMvc(routes =>
             {
@@ -120,11 +103,11 @@ namespace GraphWebhooks_Core
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
 
-            app.UseSignalR();
+            app.UseSignalR(builder => builder.MapHub<NotificationHub>(new PathString("/notifications")));
         }
 
         // Handle sign-in errors differently than generic errors.
-        private Task OnAuthenticationFailed(FailureContext context)
+        private Task OnAuthenticationFailed(RemoteFailureContext context)
         {
             context.HandleResponse();
             context.Response.Redirect("Home/Error?message=" + context.Failure.Message.Replace("\r\n", " "));

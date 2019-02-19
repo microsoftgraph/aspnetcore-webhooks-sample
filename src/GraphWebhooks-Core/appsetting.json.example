@@ -1,11 +1,11 @@
 {
 	"AADInstance": "https://login.microsoftonline.com/",
-	"AppId": "b288e7bb-49d7-4b14-9679-44d41bcf9fda",
-	"AppSecret": "{vlyB[d|u:7)2aIJL]-Lb{b7iP%+h7;.a", // This sample uses a password (secret) to authenticate. Production apps should use a certificate.
+	"AppId": "ENTER_YOUR_APP_ID",
+	"AppSecret": "ENTER_YOUR_SECRET", // This sample uses a password (secret) to authenticate. Production apps should use a certificate.
 	"BaseRedirectUri": "https://localhost:44334",
 	"CallbackPath": "/signin-oidc",
 	"GraphResourceId": "https://graph.microsoft.com/",
-	"NotificationUrl": "https://70c3deb2.ngrok.io/notification/listen",
+	"NotificationUrl": "ENTER_YOUR_URL/notification/listen",
 	"Logging": {
 		"IncludeScopes": false,
 		"LogLevel": {

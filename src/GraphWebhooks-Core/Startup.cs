@@ -58,21 +58,45 @@ namespace GraphWebhooks_Core
             // This sample uses an in-memory cache for tokens and subscriptions. Production apps will typically use some method of persistent storage.
             services.AddMemoryCache();
 
-            // Configure the OWIN pipeline to use cookie auth.
-            services.AddAuthentication(
-                    SharedOptions =>
-                        SharedOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options => { })
-                .AddOpenIdConnect(options => { });
+			// Configure the OWIN pipeline to use cookie auth.
+			services.AddAuthentication(
+					 SharedOptions =>
+					 {
+						 SharedOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+						 SharedOptions.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+					 })						 
+				 .AddCookie(
+					 options =>
+					 {
+						 options.LoginPath = "/Account/SignIn/";
+						 options.LogoutPath = "/Account/SignOut/";
+					 }
+					 )
+				 .AddOpenIdConnect(options => {
+					 options.Authority = Configuration["AADInstance"];
+					 options.ClientId = Configuration["AppId"];
+					 options.ResponseType = OpenIdConnectResponseType.IdToken;
+					 options.SignedOutRedirectUri = Configuration["BaseRedirectUri"] + Configuration["CallbackPath"];
+					 options.Events = new OpenIdConnectEvents
+					 {
+						 OnRemoteFailure = OnAuthenticationFailed
+					 };
+					 options.TokenValidationParameters = new TokenValidationParameters
+					 {
+						 ValidateIssuer = false,
+						 NameClaimType = "name"
+					 };
+				 });
 
-            // Add the sample's SampleAuthProvider, SDKHelper, and SubscriptionStore.
-            services.AddSingleton<ISampleAuthProvider, SampleAuthProvider>();
+			// Add the sample's SampleAuthProvider, SDKHelper, and SubscriptionStore.
+			services.AddSingleton<ISampleAuthProvider, SampleAuthProvider>();
             services.AddTransient<ISDKHelper, SDKHelper>();
             services.AddTransient<ISubscriptionStore, SubscriptionStore>();
 
             services.AddSignalR(
                 options => options.EnableDetailedErrors = true);
-        }
+			
+		}
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app,
@@ -94,16 +118,20 @@ namespace GraphWebhooks_Core
                 app.UseExceptionHandler("/Home/Error");
             }
 
-            app.UseStaticFiles();
+			
+			app.UseStaticFiles();
+			app.UseAuthentication();
 
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
-            });
+			app.UseMvc(routes =>
+					 {
+						 routes.MapRoute(
+							 name: "default",
+							 template: "{controller=Home}/{action=Index}/{id?}");
+					 });
 
-            app.UseSignalR(builder => builder.MapHub<NotificationHub>(new PathString("/notifications")));
+			app.UseSignalR(builder => builder.MapHub<NotificationHub>(new PathString("/notifications")));		
+			
+						
         }
 
         // Handle sign-in errors differently than generic errors.

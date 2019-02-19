@@ -14,7 +14,8 @@ using Microsoft.Extensions.Options;
 
 namespace GraphWebhooks_Core.Controllers
 {
-    public class AccountController : Controller
+	[Route("[controller]/[action]")]
+	public class AccountController : Controller
     {
         private readonly AppSettings appSettings;
 
@@ -23,17 +24,17 @@ namespace GraphWebhooks_Core.Controllers
             appSettings = optionsAccessor.Value;
         }
 
-        [HttpGet]
-        public async Task SignIn()
-        {
-            if (HttpContext.User == null || !HttpContext.User.Identity.IsAuthenticated)
-            {
-                await HttpContext.Authentication.ChallengeAsync(
-                    OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/Home" });
-            }
-        }
+		[HttpGet]
+		public async Task SignIn()
+		{
+			if (HttpContext.User == null || !HttpContext.User.Identity.IsAuthenticated)
+			{
+				await HttpContext.Authentication.ChallengeAsync(
+				   OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/Home" });
+			}
+		}
 
-        [HttpGet]
+		[HttpGet]
         public async Task<IActionResult> SignOut()
         {
             if (HttpContext.User.Identity.IsAuthenticated)

@@ -14,16 +14,18 @@ using Microsoft.Extensions.Options;
 
 namespace GraphWebhooks_Core.Controllers
 {
+	
 	[Route("[controller]/[action]")]
 	public class AccountController : Controller
     {
         private readonly AppSettings appSettings;
-
+		
         public AccountController(IOptions<AppSettings> optionsAccessor)
         {
             appSettings = optionsAccessor.Value;
         }
 
+		[Authorize(AuthenticationSchemes = OpenIdConnectDefaults.AuthenticationScheme)]
 		[HttpGet]
 		public async Task SignIn()
 		{

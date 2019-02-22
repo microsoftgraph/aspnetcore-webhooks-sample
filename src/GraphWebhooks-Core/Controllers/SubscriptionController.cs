@@ -10,11 +10,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Graph;
 using GraphWebhooks_Core.Helpers;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 namespace GraphWebhooks_Core.Controllers
 {
-    [Authorize]
-    [ValidateAntiForgeryToken]
+	[Authorize(AuthenticationSchemes = OpenIdConnectDefaults.AuthenticationScheme)]
+	[ValidateAntiForgeryToken]
     public class SubscriptionController : Controller
     {
         private readonly ISDKHelper sdkHelper;

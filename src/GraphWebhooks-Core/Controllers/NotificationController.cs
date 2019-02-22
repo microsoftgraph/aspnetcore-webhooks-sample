@@ -17,6 +17,8 @@ using GraphWebhooks_Core.Models;
 using GraphWebhooks_Core.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+
 namespace GraphWebhooks_Core.Controllers
 {
     public class NotificationController : Controller
@@ -37,8 +39,8 @@ namespace GraphWebhooks_Core.Controllers
             this.logger = logger;
         }
 
-        [Authorize]
-        public ActionResult LoadView(string id)
+		[Authorize(AuthenticationSchemes = OpenIdConnectDefaults.AuthenticationScheme)]
+		public ActionResult LoadView(string id)
         {
             ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
             return View("Notification");

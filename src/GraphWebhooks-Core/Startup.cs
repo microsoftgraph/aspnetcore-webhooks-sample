@@ -18,10 +18,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace GraphWebhooks_Core
 {
+	
 	public class Startup
 	{
 		public Startup(IHostingEnvironment env)
@@ -41,6 +44,10 @@ namespace GraphWebhooks_Core
 		}
 
 		public IConfigurationRoot Configuration { get; }
+		private ClaimsPrincipal TransformClaims(ClaimsPrincipal claimsPrincipal)
+		{			
+			return claimsPrincipal;
+		}
 
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
@@ -63,7 +70,7 @@ namespace GraphWebhooks_Core
 			{
 				SharedOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 				SharedOptions.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-				
+
 			})
 				 .AddCookie(
 					 options =>
@@ -73,10 +80,10 @@ namespace GraphWebhooks_Core
 					 })
 				 .AddOpenIdConnect(options =>
 				 {
-					 options.Authority = "https://login.microsoftonline.com/common";
+					 options.Authority = Configuration["AADInstance"] + "common";
 					 options.ClientSecret = Configuration["AppSecret"];
 					 options.ClientId = Configuration["AppId"];
-					 //options.SaveTokens = true;
+					 options.SaveTokens = true;
 					 options.ResponseType = OpenIdConnectResponseType.IdToken;
 					 options.SignedOutRedirectUri = Configuration["BaseRedirectUri"] + Configuration["CallbackPath"];
 					 options.Events = new OpenIdConnectEvents
@@ -86,6 +93,11 @@ namespace GraphWebhooks_Core
 						 {
 							 return Task.CompletedTask;
 						 },
+						 OnTicketReceived = (context) =>
+						 {
+							 context.Principal = TransformClaims(context.Principal);
+							 return Task.CompletedTask;
+						 }
 						 //OnTokenResponseReceived = (context) =>
 						 //{
 
@@ -104,7 +116,7 @@ namespace GraphWebhooks_Core
 			services.AddSingleton<ISampleAuthProvider, SampleAuthProvider>();
 			services.AddTransient<ISDKHelper, SDKHelper>();
 			services.AddTransient<ISubscriptionStore, SubscriptionStore>();
-
+			services.AddHttpContextAccessor();
 			services.AddSignalR(
 				options => options.EnableDetailedErrors = true);
 

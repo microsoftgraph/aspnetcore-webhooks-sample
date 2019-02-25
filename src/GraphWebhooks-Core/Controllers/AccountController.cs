@@ -24,8 +24,8 @@ namespace GraphWebhooks_Core.Controllers
         {
             appSettings = optionsAccessor.Value;
         }
-
-		[Authorize(AuthenticationSchemes = OpenIdConnectDefaults.AuthenticationScheme)]
+        		
+        [Authorize]
 		[HttpGet]
 		public async Task SignIn()
 		{

@@ -12,8 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphWebhooks-Core", "src\GraphWebhooks-Core\GraphWebhooks-Core.csproj", "{F8984AA5-E168-48C4-B52D-BF50226A55D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication1", "WebApplication1\WebApplication1.csproj", "{6DBA493C-3779-4BA1-84F2-B01522680D8E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,17 +22,12 @@ Global
 		{F8984AA5-E168-48C4-B52D-BF50226A55D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8984AA5-E168-48C4-B52D-BF50226A55D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8984AA5-E168-48C4-B52D-BF50226A55D9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6DBA493C-3779-4BA1-84F2-B01522680D8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6DBA493C-3779-4BA1-84F2-B01522680D8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6DBA493C-3779-4BA1-84F2-B01522680D8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6DBA493C-3779-4BA1-84F2-B01522680D8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{F8984AA5-E168-48C4-B52D-BF50226A55D9} = {343D7E8F-E8EE-41D3-8AD3-DBE58842DD00}
-		{6DBA493C-3779-4BA1-84F2-B01522680D8E} = {343D7E8F-E8EE-41D3-8AD3-DBE58842DD00}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8A96762F-3593-47A4-9C51-63AE0CE5A455}

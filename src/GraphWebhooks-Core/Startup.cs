@@ -6,11 +6,15 @@
 using GraphWebhooks_Core.Helpers;
 using GraphWebhooks_Core.SignalR;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.AzureAD.UI;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,23 +31,13 @@ namespace GraphWebhooks_Core
 	
 	public class Startup
 	{
-		public Startup(IHostingEnvironment env)
-		{
-			IConfigurationBuilder builder = new ConfigurationBuilder()
-				.SetBasePath(env.ContentRootPath)
-				.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-				.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
-
-			if (env.IsDevelopment())
-			{
-
-				// For details on using the user secret store see http://go.microsoft.com/fwlink/?LinkID=532709
-			}
-			builder.AddEnvironmentVariables();
-			Configuration = builder.Build();
+		public Startup(IConfiguration configuration)
+		{            
+            Configuration = configuration;
 		}
 
-		public IConfigurationRoot Configuration { get; }
+        public IConfiguration Configuration { get; }
+        		
 		private ClaimsPrincipal TransformClaims(ClaimsPrincipal claimsPrincipal)
 		{			
 			return claimsPrincipal;
@@ -52,111 +46,56 @@ namespace GraphWebhooks_Core
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
 
-			// Adds services required for using options.
-			services.AddOptions();
+            services.AddAuthentication(AzureADDefaults.AuthenticationScheme)
+                .AddAzureAD(options => Configuration.Bind("AzureAd", options));
 
-			// Register the IConfiguration instance which AppOptions binds against.
-			services.Configure<AppSettings>(Configuration);
+            services.Configure<OpenIdConnectOptions>(AzureADDefaults.OpenIdScheme, options =>
+            {
+                options.Authority = options.Authority + "/v2.0/";
+                options.TokenValidationParameters.ValidateIssuer = false;
+            });
 
-			// Add framework services.
-			services.AddMvc();
-
-			// This sample uses an in-memory cache for tokens and subscriptions. Production apps will typically use some method of persistent storage.
-			services.AddMemoryCache();
-
-			// Configure the OWIN pipeline to use cookie auth.
-			services.AddAuthentication(SharedOptions =>
-			{
-				SharedOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-				SharedOptions.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-
-			})
-				 .AddCookie(
-					 options =>
-					 {
-						 options.LoginPath = "/Account/SignIn/";
-						 options.LogoutPath = "/Account/SignOut/";
-					 })
-				 .AddOpenIdConnect(options =>
-				 {
-					 options.Authority = Configuration["AADInstance"] + "common";
-					 options.ClientSecret = Configuration["AppSecret"];
-					 options.ClientId = Configuration["AppId"];
-					 options.SaveTokens = true;
-					 options.ResponseType = OpenIdConnectResponseType.IdToken;
-					 options.SignedOutRedirectUri = Configuration["BaseRedirectUri"] + Configuration["CallbackPath"];
-					 options.Events = new OpenIdConnectEvents
-					 {
-						 OnRemoteFailure = OnAuthenticationFailed,
-						 OnAuthenticationFailed = (context) =>
-						 {
-							 return Task.CompletedTask;
-						 },
-						 OnTicketReceived = (context) =>
-						 {
-							 context.Principal = TransformClaims(context.Principal);
-							 return Task.CompletedTask;
-						 }
-						 //OnTokenResponseReceived = (context) =>
-						 //{
-
-						 // context.Success();
-						 // return Task.CompletedTask;
-						 //}
-					 };
-					 options.TokenValidationParameters = new TokenValidationParameters
-					 {
-						 ValidateIssuer = false,
-						 NameClaimType = "name"
-					 };
-				 });
-
-			// Add the sample's SampleAuthProvider, SDKHelper, and SubscriptionStore.
-			services.AddSingleton<ISampleAuthProvider, SampleAuthProvider>();
-			services.AddTransient<ISDKHelper, SDKHelper>();
-			services.AddTransient<ISubscriptionStore, SubscriptionStore>();
-			services.AddHttpContextAccessor();
-			services.AddSignalR(
-				options => options.EnableDetailedErrors = true);
-
+            services.AddMvc(options =>
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+                options.Filters.Add(new AuthorizeFilter(policy));
+            })
+            .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 		}
+        		
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        {
+            if(env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
+            }
 
-		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-		public void Configure(IApplicationBuilder app,
-							  IHostingEnvironment env,
-							  ILoggerFactory loggerFactory,
-							  IMemoryCache cache,
-							  IOptions<AppSettings> options)
-		{
-			loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-			loggerFactory.AddDebug();
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+            app.UseCookiePolicy();
 
-			if (env.IsDevelopment())
-			{
-				app.UseDeveloperExceptionPage();
-				app.UseBrowserLink();
-			}
-			else
-			{
-				app.UseExceptionHandler("/Home/Error");
-			}
+            app.UseAuthentication();
 
-
-			app.UseStaticFiles();
-			app.UseAuthentication();
-
-			app.UseMvc(routes =>
-					 {
-						 routes.MapRoute(
-							 name: "default",
-							 template: "{controller=Home}/{action=Index}/{id?}");
-					 });
-
-			app.UseSignalR(builder => builder.MapHub<NotificationHub>(new PathString("/notifications")));
-
-
-		}
+            app.UseMvc(routes =>
+            {
+                routes.MapRoute(
+                    name: "default",
+                    template: "{controller=Home}/{action=Index}/{id?}");
+            });
+        }
 
 		// Handle sign-in errors differently than generic errors.
 		private Task OnAuthenticationFailed(RemoteFailureContext context)

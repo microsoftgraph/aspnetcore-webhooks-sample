@@ -10,19 +10,23 @@ namespace GraphWebhooks_Core
 			CreateWebHostBuilder(args).Build().Run();
 		}
 
-		public static IWebHostBuilder CreateWebHostBuilder(string[] args)
-		{
-			return WebHost.CreateDefaultBuilder(args)
-				.UseStartup<Startup>()
-				.ConfigureKestrel((context, options) =>
-				{
-					//options.Limits.MaxRequestHeadersTotalSize = int.MaxValue;
-					//options.Limits.MaxRequestHeaderCount = int.MaxValue;
-					//options.Limits.MaxRequestBufferSize = int.MaxValue;
-					//options.Limits.MaxResponseBufferSize = int.MaxValue;
-					
-				});
-		}
+        //public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        //{
+        //	return WebHost.CreateDefaultBuilder(args)
+        //		.UseStartup<Startup>()
+        //		.ConfigureKestrel((context, options) =>
+        //		{
+        //			//options.Limits.MaxRequestHeadersTotalSize = int.MaxValue;
+        //			//options.Limits.MaxRequestHeaderCount = int.MaxValue;
+        //			//options.Limits.MaxRequestBufferSize = int.MaxValue;
+        //			//options.Limits.MaxResponseBufferSize = int.MaxValue;
+
+        //		});
+        //}
+
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
+            .UseStartup<Startup>();
 	}
 
 }

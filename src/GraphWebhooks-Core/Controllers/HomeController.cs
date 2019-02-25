@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GraphWebhooks_Core.Controllers
-{
-	[Authorize(AuthenticationSchemes = OpenIdConnectDefaults.AuthenticationScheme)]
+{	
 	public class HomeController : Controller
     {
         public IActionResult Index()

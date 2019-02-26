@@ -8,7 +8,7 @@
             <li><a asp-area="" asp-controller="Account" asp-action="SignOut">Sign Out</a></li>
         </ul>*@
     var identity = User.Identity as ClaimsIdentity; // Azure AD V2 endpoint specific
-    string preferred_username = identity.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+    string preferred_username = identity.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
     <ul class="nav navbar-nav navbar-right">
         <li class="navbar-text">Hello @preferred_username</li>
         <li><a asp-area="AzureAD" asp-controller="Account" asp-action="SignOut">Sign out</a></li>

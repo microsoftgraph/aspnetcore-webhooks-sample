@@ -3,8 +3,11 @@
 *  See LICENSE in the source repository root for complete license information. 
 */
 
+using GraphWebhooks_Core.Extensions;
 using GraphWebhooks_Core.Helpers;
+using GraphWebhooks_Core.Resource;
 using GraphWebhooks_Core.SignalR;
+using GraphWebhooks_Core.TokenCacheProviders;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureAD.UI;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -55,21 +58,42 @@ namespace GraphWebhooks_Core
             services.AddAuthentication(AzureADDefaults.AuthenticationScheme)
                 .AddAzureAD(options => Configuration.Bind("AzureAd", options));
 
+            services.AddTokenAcquisition()
+                .AddDistributedMemoryCache()
+                .AddSession()
+                .AddSessionBasedTokenCache();
+
             services.Configure<OpenIdConnectOptions>(AzureADDefaults.OpenIdScheme, options =>
             {
                 options.Authority = options.Authority + "/v2.0/";
-                options.TokenValidationParameters.ValidateIssuer = false;
-            });
+                options.TokenValidationParameters.IssuerValidator = AadIssuerValidator.ForAadInstance(options.Authority).ValidateAadIssuer;
+               
+                // Response type
+                options.ResponseType = "id_token code";
+                options.Scope.Add("offline_access");
+                options.Scope.Add("Mail.Read");
 
-            services.AddMvc(options =>
-            {
-                var policy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-                options.Filters.Add(new AuthorizeFilter(policy));
-            })
-            .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-		}
+                // Handling the auth code
+                var handler = options.Events.OnAuthorizationCodeReceived;
+                options.Events.OnAuthorizationCodeReceived = async context =>
+                {
+                    var _tokenAcquisition = context.HttpContext.RequestServices.GetRequiredService<ITokenAcquisition>();
+                    await _tokenAcquisition.AddAccountToCacheFromAuthorizationCode(context, new string[] { "Mail.Read" });
+                    await handler(context);
+                };
+
+                // Handling the sign-out: removing the account from MSAL.NET cache
+                options.Events.OnRedirectToIdentityProviderForSignOut = async context =>
+                {
+                    var user = context.HttpContext.User;
+
+                    // Avoid displaying the select account dialog
+                    context.ProtocolMessage.LoginHint = user.GetLoginHint();
+                    context.ProtocolMessage.DomainHint = user.GetDomainHint();
+                    await Task.FromResult(0);
+                };
+            });
+        }
         		
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
@@ -86,6 +110,8 @@ namespace GraphWebhooks_Core
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+            // to use a session token cache
+            app.UseSession();
 
             app.UseAuthentication();
 

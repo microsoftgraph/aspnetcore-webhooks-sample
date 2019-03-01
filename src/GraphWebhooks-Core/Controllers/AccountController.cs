@@ -9,20 +9,26 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using GraphWebhooks_Core.Helpers;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.AzureAD.UI;
+using Microsoft.Extensions.Configuration;
+using GraphWebhooks_Core.Infrastructure;
 
 namespace GraphWebhooks_Core.Controllers
 {
 	
-	[Route("[controller]/[action]")]
+	//[Route("[controller]/[action]")]
 	public class AccountController : Controller
     {
+        private readonly AzureADOptions azureAdOptions;
         private readonly AppSettings appSettings;
-		
-        public AccountController(IOptions<AppSettings> optionsAccessor)
+
+        public AccountController(IOptions<AppSettings> appSettingsAccessor,
+                                IConfiguration configuration)
         {
-            appSettings = optionsAccessor.Value;
+            appSettings = appSettingsAccessor.Value;
+            azureAdOptions = new AzureADOptions();
+            configuration.Bind("AzureAd", azureAdOptions);            
         }
         		
         [Authorize]
@@ -73,9 +79,9 @@ namespace GraphWebhooks_Core.Controllers
         public ActionResult RequestPermissions()
         {
             string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
-            string redirectUri = System.Net.WebUtility.UrlEncode(appSettings.BaseRedirectUri + "/Account/GrantPermissions");
+            string redirectUri = System.Net.WebUtility.UrlEncode(appSettings.BaseRedirectUrl + "/Account/GrantPermissions");
             return new RedirectResult(
-                $"{ appSettings.AADInstance }{ tenantId }/adminconsent?client_id={ appSettings.AppId }&redirect_uri={ redirectUri }"
+                $"{ azureAdOptions.Instance}{ tenantId }/adminconsent?client_id={ azureAdOptions.ClientId }&redirect_uri={ redirectUri }"
             );
         }
 

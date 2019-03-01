@@ -4,10 +4,8 @@
     "ClientId": "ENTER_YOUR_APP_ID",
     "ClientSecret": "ENTER_YOUR_SECRET", // This sample uses a password (secret) to authenticate. Production apps should use a certificate.
     "TenantId": "common",
-    "BaseRedirectUri": "https://localhost:44334",
-    "CallbackPath": "/signin-oidc",
-    "GraphResourceId": "https://graph.microsoft.com/",
-    "NotificationUrl": "ENTER_YOUR_URL/notification/listen"
+    "CallbackPath": "/signin-oidc"
+
   },
   "Logging": {
     "IncludeScopes": false,
@@ -16,5 +14,8 @@
       "System": "Information",
       "Microsoft": "Information"
     }
-  }
+  },
+  "GraphApiUrl": "https://graph.microsoft.com",
+  "NotificationUrl": "ENTER_YOUR_URL/notification/listen",
+  "BaseRedirectUrl": "https://localhost:44334"
 }

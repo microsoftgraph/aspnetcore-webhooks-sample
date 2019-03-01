@@ -18,28 +18,30 @@ using GraphWebhooks_Core.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using System.Net.Http.Headers;
+using Microsoft.Identity.Web.Client;
 
 namespace GraphWebhooks_Core.Controllers
 {
     public class NotificationController : Controller
     {
-        private readonly ISDKHelper sdkHelper;
         private readonly ISubscriptionStore subscriptionStore;
         private readonly IHubContext<NotificationHub> notificationHub;
         private readonly ILogger logger;
+        readonly ITokenAcquisition tokenAcquisition;
 
-        public NotificationController(ISDKHelper sdkHelper,
-                                      ISubscriptionStore subscriptionStore,
+        public NotificationController(ISubscriptionStore subscriptionStore,
                                       IHubContext<NotificationHub> notificationHub,
-                                      ILogger<NotificationController> logger)
+                                      ILogger<NotificationController> logger,
+                                      ITokenAcquisition tokenAcquisition)
         {
-            this.sdkHelper = sdkHelper;
             this.subscriptionStore = subscriptionStore;
             this.notificationHub = notificationHub;
             this.logger = logger;
+            this.tokenAcquisition = tokenAcquisition;
         }
 
-		[Authorize(AuthenticationSchemes = OpenIdConnectDefaults.AuthenticationScheme)]
+		[Authorize]
 		public ActionResult LoadView(string id)
         {
             ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
@@ -47,7 +49,7 @@ namespace GraphWebhooks_Core.Controllers
         }
 
         // The notificationUrl endpoint that's registered with the webhook subscription.
-        [HttpPost]
+        [HttpPost]       
         public async Task<ActionResult> Listen()
         {
 
@@ -82,7 +84,6 @@ namespace GraphWebhooks_Core.Controllers
                                 // Verify the current client state matches the one that was sent.
                                 if (current.ClientState == subscription.ClientState)
                                 {
-
                                     // Just keep the latest notification for each resource. No point pulling data more than once.
                                     notifications[current.Resource] = current;
                                 }
@@ -90,7 +91,6 @@ namespace GraphWebhooks_Core.Controllers
 
                             if (notifications.Count > 0)
                             {
-
                                 // Query for the changed messages. 
                                 await GetChangedMessagesAsync(notifications.Values);
                             }
@@ -120,7 +120,19 @@ namespace GraphWebhooks_Core.Controllers
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
 
                 // Initialize the GraphServiceClient. This sample uses the tenant ID the cache key.
-                GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(subscription.TenantId);
+                // Fetch the access token
+                string accessToken = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
+                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+
+                // Initialize the GraphServiceClient. 
+                var graphClient = new GraphServiceClient(new DelegateAuthenticationProvider(
+                    async (requestMessage) =>
+                    {
+                        // Append the access token to the request.
+                        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
+                            Infrastructure.Constants.BearerAuthorizationScheme, accessToken);
+                    }));
+                                
 
                 MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
                 try

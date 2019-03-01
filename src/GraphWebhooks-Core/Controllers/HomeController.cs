@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GraphWebhooks_Core.Controllers
-{	
-	public class HomeController : Controller
+{
+    public class HomeController : Controller
     {
         public IActionResult Index()
         {

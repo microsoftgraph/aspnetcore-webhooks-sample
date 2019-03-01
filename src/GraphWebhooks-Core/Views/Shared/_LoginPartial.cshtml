@@ -1,5 +1,4 @@
-﻿@*@using System.Security.Principal*@
-@using System.Security.Claims
+﻿@using System.Security.Claims
 
 @if (User.Identity.IsAuthenticated)
 {
@@ -15,10 +14,7 @@
     </ul>
 }
 else
-{
-    @*<ul class="nav navbar-nav navbar-right">
-            <li><a asp-area="" asp-controller="Account" asp-action="Signin">Sign in</a></li>
-        </ul>*@
+{  
     <ul class="nav navbar-nav navbar-right">
         <li><a asp-area="AzureAD" asp-controller="Account" asp-action="Signin">Sign in</a></li>
     </ul>

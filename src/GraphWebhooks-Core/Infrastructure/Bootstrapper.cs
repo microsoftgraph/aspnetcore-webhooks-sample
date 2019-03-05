@@ -1,4 +1,9 @@
-﻿using GraphWebhooks_Core.Helpers;
+﻿/*
+ *  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
+ *  See LICENSE in the source repository root for complete license information.
+ */
+
+using GraphWebhooks_Core.Helpers;
 using Microsoft.AspNetCore.Authentication.AzureAD.UI;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -22,10 +27,8 @@ namespace GraphWebhooks_Core.Infrastructure
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
             // Register the IConfiguration instance which AppOptions binds against.
-            services.Configure<AppSettings>(configuration);        
-            //            services.Configure<AzureADOptions>(configuration.GetSection("AzureAd"));
+            services.Configure<AppSettings>(configuration);       
             //https://docs.microsoft.com/en-us/dotnet/standard/microservices-architecture/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
-           // services.AddHttpClient<IGraphApiOperations, GraphApiOperationService>();
         }
 
         public static void InitializeAuthentication(this IServiceCollection services, IConfiguration configuration)
@@ -40,9 +43,11 @@ namespace GraphWebhooks_Core.Infrastructure
             ;
 
             services.AddMvc();
-                
-            // Add the sample's SampleAuthProvider and SubscriptionStore.            
+
+            // Add the sample's SubscriptionStore.    
+            services.AddTransient<ISDKHelper, SDKHelper>();
             services.AddTransient<ISubscriptionStore, SubscriptionStore>();
+            services.AddSingleton<ISampleAuthProvider, SampleAuthProvider>();
             services.AddHttpContextAccessor();
             services.AddSignalR(
                 options => options.EnableDetailedErrors = true);

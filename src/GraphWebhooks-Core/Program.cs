@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore;
+﻿/*
+ *  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
+ *  See LICENSE in the source repository root for complete license information.
+ */
+
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
 namespace GraphWebhooks_Core
@@ -8,21 +13,7 @@ namespace GraphWebhooks_Core
 		public static void Main(string[] args)
 		{
 			CreateWebHostBuilder(args).Build().Run();
-		}
-
-        //public static IWebHostBuilder CreateWebHostBuilder(string[] args)
-        //{
-        //	return WebHost.CreateDefaultBuilder(args)
-        //		.UseStartup<Startup>()
-        //		.ConfigureKestrel((context, options) =>
-        //		{
-        //			//options.Limits.MaxRequestHeadersTotalSize = int.MaxValue;
-        //			//options.Limits.MaxRequestHeaderCount = int.MaxValue;
-        //			//options.Limits.MaxRequestBufferSize = int.MaxValue;
-        //			//options.Limits.MaxResponseBufferSize = int.MaxValue;
-
-        //		});
-        //}
+		}                
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)

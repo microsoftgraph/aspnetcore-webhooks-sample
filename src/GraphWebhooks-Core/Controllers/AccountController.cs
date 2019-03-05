@@ -17,7 +17,6 @@ using GraphWebhooks_Core.Infrastructure;
 namespace GraphWebhooks_Core.Controllers
 {
 	
-	//[Route("[controller]/[action]")]
 	public class AccountController : Controller
     {
         private readonly AzureADOptions azureAdOptions;
@@ -35,12 +34,12 @@ namespace GraphWebhooks_Core.Controllers
 		[HttpGet]
 		public async Task SignIn()
 		{
-			if (HttpContext.User == null || !HttpContext.User.Identity.IsAuthenticated)
-			{
-				await HttpContext.Authentication.ChallengeAsync(
-				   OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/Home" });
-			}
-		}
+            if (HttpContext.User == null || !HttpContext.User.Identity.IsAuthenticated)
+            {
+                await HttpContext.Authentication.ChallengeAsync(
+                   OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/Home" });
+            }
+        }
 
 		[HttpGet]
         public async Task<IActionResult> SignOut()

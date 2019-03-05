@@ -23,14 +23,17 @@ using Microsoft.Identity.Web.Client;
 
 namespace GraphWebhooks_Core.Controllers
 {
+    
     public class NotificationController : Controller
     {
+        private readonly ISDKHelper sdkHelper;
         private readonly ISubscriptionStore subscriptionStore;
         private readonly IHubContext<NotificationHub> notificationHub;
         private readonly ILogger logger;
         readonly ITokenAcquisition tokenAcquisition;
 
-        public NotificationController(ISubscriptionStore subscriptionStore,
+        public NotificationController(ISDKHelper sdkHelper,
+            ISubscriptionStore subscriptionStore,
                                       IHubContext<NotificationHub> notificationHub,
                                       ILogger<NotificationController> logger,
                                       ITokenAcquisition tokenAcquisition)
@@ -39,6 +42,7 @@ namespace GraphWebhooks_Core.Controllers
             this.notificationHub = notificationHub;
             this.logger = logger;
             this.tokenAcquisition = tokenAcquisition;
+            this.sdkHelper = sdkHelper;
         }
 
 		[Authorize]
@@ -72,7 +76,6 @@ namespace GraphWebhooks_Core.Controllers
                         JObject jsonObject = JObject.Parse(inputStream.ReadToEnd());
                         if (jsonObject != null)
                         {
-
                             // Notifications are sent in a 'value' array. The array might contain multiple notifications for events that are
                             // registered for the same notification endpoint, and that occur within a short timespan.
                             JArray value = JArray.Parse(jsonObject["value"].ToString());
@@ -119,10 +122,11 @@ namespace GraphWebhooks_Core.Controllers
 
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
 
-                // Initialize the GraphServiceClient. This sample uses the tenant ID the cache key.
                 // Fetch the access token
+                // GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(subscription.TenantId);
+
                 string accessToken = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
-                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead }, subscription.TenantId);
 
                 // Initialize the GraphServiceClient. 
                 var graphClient = new GraphServiceClient(new DelegateAuthenticationProvider(
@@ -132,7 +136,6 @@ namespace GraphWebhooks_Core.Controllers
                         requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
                             Infrastructure.Constants.BearerAuthorizationScheme, accessToken);
                     }));
-                                
 
                 MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
                 try

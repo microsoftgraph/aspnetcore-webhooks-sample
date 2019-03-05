@@ -22,15 +22,17 @@ namespace GraphWebhooks_Core.Controllers
     {
         private readonly ISubscriptionStore subscriptionStore;
         private readonly AppSettings appSettings;
-        readonly ITokenAcquisition tokenAcquisition;       
+        readonly ITokenAcquisition tokenAcquisition;
+        private readonly ISDKHelper sdkHelper;
 
-        public SubscriptionController(ISubscriptionStore subscriptionStore,
+        public SubscriptionController(ISDKHelper sdkHelper, ISubscriptionStore subscriptionStore,
                                       IOptions<AppSettings> optionsAccessor,
                                       ITokenAcquisition tokenAcquisition)
         {            
             this.subscriptionStore = subscriptionStore;
             appSettings = optionsAccessor.Value;
             this.tokenAcquisition = tokenAcquisition;
+            this.sdkHelper = sdkHelper;
         }
 
         // Create a subscription.

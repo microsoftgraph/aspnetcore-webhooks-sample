@@ -50,7 +50,7 @@ namespace GraphWebhooks_Core
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
-          //  app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
             // to use a session token cache
@@ -66,7 +66,7 @@ namespace GraphWebhooks_Core
             });
 
             
-            app.UseSignalR(builder => builder.MapHub<NotificationHub>(new PathString("/notifications")));
+            app.UseSignalR(builder => builder.MapHub<NotificationHub>(new PathString("/NotificationHub")));
         }
 
 		// Handle sign-in errors differently than generic errors.

@@ -42,7 +42,6 @@ namespace GraphWebhooks_Core.Models
         [JsonExtensionData(ReadData = true)]
         public IDictionary<string, object> AdditionalData { get; set; }
     }
-
     public class ResourceData
     {
 

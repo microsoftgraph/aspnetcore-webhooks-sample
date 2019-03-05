@@ -20,6 +20,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using System.Net.Http.Headers;
 using Microsoft.Identity.Web.Client;
+using System.Security.Claims;
+using GraphWebhooks_Core.Extensions;
 
 namespace GraphWebhooks_Core.Controllers
 {
@@ -121,10 +123,27 @@ namespace GraphWebhooks_Core.Controllers
                 if (notification.ResourceData.ODataType != "#Microsoft.Graph.Message") continue;
 
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
+                                
+                // Set the claims for ObjectIdentifier and TenantId
+                var oid = new Claim(ClaimTypesExtension.ObjectIdentifier, subscription.UserId);
+                var tid = new Claim(ClaimTypesExtension.TenantId, subscription.TenantId);
+
+                var claimsIdentity = new ClaimsIdentity();
+                
+                claimsIdentity.AddClaims(
+                    new List<Claim>
+                    {
+                        oid,
+                        tid
+                    });
+                                               
+                var principal = new ClaimsPrincipal();
+                principal.AddIdentity(claimsIdentity);
+
+                // Use the above claims for the current HttpContext
+                HttpContext.User = principal;
 
                 // Fetch the access token
-                // GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(subscription.TenantId);
-
                 string accessToken = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
                         HttpContext, new[] { Infrastructure.Constants.ScopeMailRead }, subscription.TenantId);
 

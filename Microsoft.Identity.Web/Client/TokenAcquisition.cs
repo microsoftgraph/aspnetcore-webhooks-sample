@@ -259,23 +259,13 @@ namespace Microsoft.Identity.Web.Client
         /// <returns></returns>
         private ConfidentialClientApplication CreateApplication(HttpContext httpContext, ClaimsPrincipal claimsPrincipal, AuthenticationProperties authenticationProperties, string signInScheme)
         {
-            //TEST
-            try
-            {
-                var request = httpContext.Request;
-                string currentUri = UriHelper.BuildAbsolute(request.Scheme, request.Host, request.PathBase, azureAdOptions.CallbackPath ?? string.Empty);
-                var credential = new ClientCredential(azureAdOptions.ClientSecret);
-                TokenCache userTokenCache = tokenCacheProvider.GetCache(httpContext, claimsPrincipal, authenticationProperties, signInScheme);
-                string authority = $"{azureAdOptions.Instance}{azureAdOptions.TenantId}/";
-                var app = new ConfidentialClientApplication(azureAdOptions.ClientId, authority, currentUri, credential, userTokenCache, null);
-                return app;
-            }
-            catch (Exception ex)
-            {
-
-                throw;
-            }
-           
+            var request = httpContext.Request;
+            string currentUri = UriHelper.BuildAbsolute(request.Scheme, request.Host, request.PathBase, azureAdOptions.CallbackPath ?? string.Empty);
+            var credential = new ClientCredential(azureAdOptions.ClientSecret);
+            TokenCache userTokenCache = tokenCacheProvider.GetCache(httpContext, claimsPrincipal, authenticationProperties, signInScheme);
+            string authority = $"{azureAdOptions.Instance}{azureAdOptions.TenantId}/";
+            var app = new ConfidentialClientApplication(azureAdOptions.ClientId, authority, currentUri, credential, userTokenCache, null);
+            return app;      
         }
 
 

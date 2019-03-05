@@ -3,8 +3,6 @@
  *  See LICENSE in the source repository root for complete license information.
  */
 
-using System.Security.Claims;
-
 namespace GraphWebhooks_Core.Extensions
 {
     public class ClaimTypesExtension

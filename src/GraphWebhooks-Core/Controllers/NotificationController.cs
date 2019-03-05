@@ -22,6 +22,7 @@ using System.Net.Http.Headers;
 using Microsoft.Identity.Web.Client;
 using System.Security.Claims;
 using GraphWebhooks_Core.Extensions;
+using Microsoft.Identity.Web;
 
 namespace GraphWebhooks_Core.Controllers
 {
@@ -124,28 +125,13 @@ namespace GraphWebhooks_Core.Controllers
 
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
                                 
-                // Set the claims for ObjectIdentifier and TenantId
-                var oid = new Claim(ClaimTypesExtension.ObjectIdentifier, subscription.UserId);
-                var tid = new Claim(ClaimTypesExtension.TenantId, subscription.TenantId);
-
-                var claimsIdentity = new ClaimsIdentity();
-                
-                claimsIdentity.AddClaims(
-                    new List<Claim>
-                    {
-                        oid,
-                        tid
-                    });
-                                               
-                var principal = new ClaimsPrincipal();
-                principal.AddIdentity(claimsIdentity);
-
+                // Set the claims for ObjectIdentifier and TenantId, and              
                 // Use the above claims for the current HttpContext
-                HttpContext.User = principal;
+                HttpContext.User = ClaimsPrincipalExtension.FromObjectIdAndTenantId(subscription.UserId, subscription.TenantId);
 
                 // Fetch the access token
                 string accessToken = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
-                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead }, subscription.TenantId);
+                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
 
                 // Initialize the GraphServiceClient. 
                 var graphClient = new GraphServiceClient(new DelegateAuthenticationProvider(

@@ -4,11 +4,11 @@
 */
 
 using Microsoft.AspNetCore.SignalR;
+using System.Threading.Tasks;
 
 namespace GraphWebhooks_Core.SignalR
 {
     public class NotificationHub : Hub
     {
-       
     }
 }

@@ -4,12 +4,8 @@
  */
 
 using GraphWebhooks_Core.Helpers;
-using Microsoft.AspNetCore.Authentication.AzureAD.UI;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Identity.Web;
@@ -36,21 +32,13 @@ namespace GraphWebhooks_Core.Infrastructure
             // Token acquisition service and its cache implementation
             services.AddAzureAdV2Authentication(configuration)
                     .AddMsal(new string[] { Constants.ScopeMailRead })
-                    .AddInMemoryTokenCache()
-                   
-            /* you could use a cookie based token cache by reaplacing the last
-             * trew lines by : .AddCookie().AddCookieBasedTokenCache()  */
-            ;
+                    .AddInMemoryTokenCache();            
 
-            services.AddMvc();
-
-            // Add the sample's SubscriptionStore.    
-            services.AddTransient<ISDKHelper, SDKHelper>();
             services.AddTransient<ISubscriptionStore, SubscriptionStore>();
-            services.AddSingleton<ISampleAuthProvider, SampleAuthProvider>();
             services.AddHttpContextAccessor();
             services.AddSignalR(
                 options => options.EnableDetailedErrors = true);
+            services.AddMvc();
         }
     }
 }

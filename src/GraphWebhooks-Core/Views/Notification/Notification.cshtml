@@ -13,12 +13,17 @@
     <script src="~/lib/@@aspnet/signalr/dist/browser/signalr.js"></script>
     <script>
 
-        var connection = new signalR.HubConnectionBuilder().withUrl("/NotificationHub").build();
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl("/NotificationHub")
+            .configureLogging(signalR.LogLevel.Trace)
+            .build();
 
-connection.on("showNotification", function (messages) {
-    $.each(messages, function (index, current) {                     // Iterate through the message collection
-        if (current.SubscriberId === '@CurrentUserId'.toString()) {  // Only show the current user's messages.
-            var message = current.Message;
+        connection.on("showNotification", function (messages) {
+            console.log(messages);
+            $.each(messages, function (index, current) {                     // Iterate through the message collection
+                if (current.subscriberId === '@CurrentUserId'.toString()) {  // Only show the current user's messages.
+                    
+            var message = current.message;
 
             var table = $("<table></table>");
             var header = $("<th>Message</th>").appendTo(table);
@@ -36,8 +41,9 @@ connection.on("showNotification", function (messages) {
         }
     });
 });
-
-connection.start();
+        connection.start().then(function () {
+            console.log("connected");
+        });
     </script>
 }
 <h2>Messages</h2>

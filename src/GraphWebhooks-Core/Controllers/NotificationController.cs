@@ -17,12 +17,9 @@ using GraphWebhooks_Core.Models;
 using GraphWebhooks_Core.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using System.Net.Http.Headers;
 using Microsoft.Identity.Web.Client;
-using System.Security.Claims;
-using GraphWebhooks_Core.Extensions;
 using Microsoft.Identity.Web;
+using GraphWebhooks_Core.Helpers.Interfaces;
 
 namespace GraphWebhooks_Core.Controllers
 {
@@ -123,7 +120,7 @@ namespace GraphWebhooks_Core.Controllers
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
                                 
                 // Set the claims for ObjectIdentifier and TenantId, and              
-                // Use the above claims for the current HttpContext
+                // use the above claims for the current HttpContext
                 HttpContext.User = ClaimsPrincipalExtension.FromObjectIdAndTenantId(subscription.UserId, subscription.TenantId);
 
                 // Fetch the access token

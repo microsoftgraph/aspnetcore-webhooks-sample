@@ -4,6 +4,7 @@
  */
 
 using GraphWebhooks_Core.Helpers;
+using GraphWebhooks_Core.Helpers.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;

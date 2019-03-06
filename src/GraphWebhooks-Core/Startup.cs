@@ -50,12 +50,9 @@ namespace GraphWebhooks_Core
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
-            //app.UseHttpsRedirection();
+
             app.UseStaticFiles();
             app.UseCookiePolicy();
-            // to use a session token cache
-            //app.UseSession();
-
             app.UseAuthentication();
 
             app.UseMvc(routes =>
@@ -68,13 +65,5 @@ namespace GraphWebhooks_Core
             
             app.UseSignalR(builder => builder.MapHub<NotificationHub>(new PathString("/NotificationHub")));
         }
-
-		// Handle sign-in errors differently than generic errors.
-		private Task OnAuthenticationFailed(RemoteFailureContext context)
-		{
-			context.HandleResponse();
-			context.Response.Redirect("Home/Error?message=" + context.Failure.Message.Replace("\r\n", " "));
-			return Task.FromResult(0);
-		}
 	}
 }

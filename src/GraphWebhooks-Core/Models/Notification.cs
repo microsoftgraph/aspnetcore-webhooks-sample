@@ -44,7 +44,6 @@ namespace GraphWebhooks_Core.Models
     }
     public class ResourceData
     {
-
         // The ID of the resource.
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }

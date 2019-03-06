@@ -10,14 +10,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Graph;
 using GraphWebhooks_Core.Helpers;
 using Microsoft.Extensions.Options;
-using System.Net.Http.Headers;
 using Microsoft.Identity.Web.Client;
 using GraphWebhooks_Core.Infrastructure;
+using GraphWebhooks_Core.Helpers.Interfaces;
 
 namespace GraphWebhooks_Core.Controllers
 {
     [Authorize]
-    [ValidateAntiForgeryToken]
     public class SubscriptionController : Controller
     {
         private readonly ISubscriptionStore subscriptionStore;
@@ -63,8 +62,7 @@ namespace GraphWebhooks_Core.Controllers
                     ClientState = clientState,
                     //ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 4230, 0) // current maximum lifespan for messages
                     ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 15, 0)     // shorter duration useful for testing
-                });
-                
+                });                
 
                 // Verify client state, then store the subscription ID and client state to validate incoming notifications.
                 if (newSubscription.ClientState == clientState)

@@ -23,16 +23,14 @@ namespace GraphWebhooks_Core.Controllers
         private readonly ISubscriptionStore subscriptionStore;
         private readonly AppSettings appSettings;
         readonly ITokenAcquisition tokenAcquisition;
-        private readonly ISDKHelper sdkHelper;
 
-        public SubscriptionController(ISDKHelper sdkHelper, ISubscriptionStore subscriptionStore,
+        public SubscriptionController(ISubscriptionStore subscriptionStore,
                                       IOptions<AppSettings> optionsAccessor,
                                       ITokenAcquisition tokenAcquisition)
         {            
             this.subscriptionStore = subscriptionStore;
             appSettings = optionsAccessor.Value;
             this.tokenAcquisition = tokenAcquisition;
-            this.sdkHelper = sdkHelper;
         }
 
         // Create a subscription.
@@ -50,14 +48,8 @@ namespace GraphWebhooks_Core.Controllers
             Subscription newSubscription = new Subscription();
             try
             {
-                // Initialize the GraphServiceClient. 
-                var graphClient = new GraphServiceClient(new DelegateAuthenticationProvider(
-                    async (requestMessage) =>
-                    {                   
-                        // Append the access token to the request.
-                        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
-                            Infrastructure.Constants.BearerAuthorizationScheme, accessToken);
-                    }));
+                // Initialize the GraphServiceClient.                
+                var graphClient = GraphServiceClientFactory.GetAuthenticatedGraphClient(accessToken);
 
                 // Create a subscription.
                 // The `Resource` property targets the `users/{user-id}` or `users/{user-principal-name}` path (not `me`) when using application permissions.
@@ -114,15 +106,9 @@ namespace GraphWebhooks_Core.Controllers
                     HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
 
                 try
-                {    
+                {
                     // Initialize the GraphServiceClient and delete the subscription.
-                    var graphClient = new GraphServiceClient(new DelegateAuthenticationProvider(
-                        async (requestMessage) =>
-                        {    
-                            // Append the access token to the request.
-                            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
-                                Infrastructure.Constants.BearerAuthorizationScheme, accessToken);
-                        }));
+                    var graphClient = GraphServiceClientFactory.GetAuthenticatedGraphClient(accessToken);
 
                     await graphClient.Subscriptions[id].Request().DeleteAsync();
                 }

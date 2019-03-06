@@ -29,14 +29,12 @@ namespace GraphWebhooks_Core.Controllers
     
     public class NotificationController : Controller
     {
-        private readonly ISDKHelper sdkHelper;
         private readonly ISubscriptionStore subscriptionStore;
         private readonly IHubContext<NotificationHub> notificationHub;
         private readonly ILogger logger;
         readonly ITokenAcquisition tokenAcquisition;
 
-        public NotificationController(ISDKHelper sdkHelper,
-            ISubscriptionStore subscriptionStore,
+        public NotificationController(ISubscriptionStore subscriptionStore,
                                       IHubContext<NotificationHub> notificationHub,
                                       ILogger<NotificationController> logger,
                                       ITokenAcquisition tokenAcquisition)
@@ -45,7 +43,6 @@ namespace GraphWebhooks_Core.Controllers
             this.notificationHub = notificationHub;
             this.logger = logger;
             this.tokenAcquisition = tokenAcquisition;
-            this.sdkHelper = sdkHelper;
         }
 
 		[Authorize]
@@ -134,13 +131,7 @@ namespace GraphWebhooks_Core.Controllers
                         HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
 
                 // Initialize the GraphServiceClient. 
-                var graphClient = new GraphServiceClient(new DelegateAuthenticationProvider(
-                    async (requestMessage) =>
-                    {
-                        // Append the access token to the request.
-                        requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
-                            Infrastructure.Constants.BearerAuthorizationScheme, accessToken);
-                    }));
+                var graphClient = GraphServiceClientFactory.GetAuthenticatedGraphClient(accessToken);
 
                 MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
                 try
@@ -160,7 +151,7 @@ namespace GraphWebhooks_Core.Controllers
             if (messages.Count > 0)
             {
                 NotificationService notificationService = new NotificationService();
-                await notificationService.SendNotificationToClient(this.notificationHub, messages);
+                                    await notificationService.SendNotificationToClient(this.notificationHub, messages);                
             }
         }
     }

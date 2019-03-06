@@ -9,10 +9,6 @@ namespace GraphWebhooks_Core.Infrastructure
     {
         public string GraphApiUrl { get; set; }        
         public string NotificationUrl { get; set; }
-        public string BaseRedirectUrl { get; set; }
-        public string AADInstance { get; internal set; }
-        public string AppId { get; internal set; }
-        public string AppSecret { get; internal set; }
-        public string GraphResourceId { get; internal set; }
+        public string BaseRedirectUrl { get; set; }        
     }
 }

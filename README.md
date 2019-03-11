@@ -155,6 +155,8 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
    `"NotificationUrl": "https://2885f9c5.ngrok.io/notification/listen",`
 
+   This is the url endpoint that will receive subscription validation callbacks and notification events from Graph, through the proxy server set up above (ngrok, for this sample).
+
 1. Still within Solution Explorer, right-click on the project name and select **Manage User Secrets**. This app uses [Secret Manager](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-2.2) configuration in storing sensitive app data - ClientId and ClientSecret.
     
     - In the **secret.json** window that opens, paste the below code.

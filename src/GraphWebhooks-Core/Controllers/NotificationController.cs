@@ -121,14 +121,15 @@ namespace GraphWebhooks_Core.Controllers
                                 
                 // Set the claims for ObjectIdentifier and TenantId, and              
                 // use the above claims for the current HttpContext
-                HttpContext.User = ClaimsPrincipalExtension.FromObjectIdAndTenantId(subscription.UserId, subscription.TenantId);
-
-                // Fetch the access token
-                string accessToken = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
-                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+                HttpContext.User = ClaimsPrincipalExtension.FromTenantIdAndObjectId(subscription.UserId, subscription.TenantId);
 
                 // Initialize the GraphServiceClient. 
-                var graphClient = GraphServiceClientFactory.GetAuthenticatedGraphClient(accessToken);
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
+                {
+                    string result = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
+                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+                    return result;
+                });
 
                 MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
                 try

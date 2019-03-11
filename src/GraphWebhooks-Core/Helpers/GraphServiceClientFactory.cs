@@ -4,14 +4,19 @@
  */
 
 using Microsoft.Graph;
+using System;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace GraphWebhooks_Core.Helpers
 {
     public static class GraphServiceClientFactory
     {
-        public static GraphServiceClient GetAuthenticatedGraphClient(string accessToken)
+        public static async Task<GraphServiceClient> GetAuthenticatedGraphClient(Func<Task<string>> acquireAccessToken)
         {
+            // Fetch the access token
+            string accessToken = await acquireAccessToken.Invoke();
+
             return new GraphServiceClient(new DelegateAuthenticationProvider(
                     async (requestMessage) =>
                     {

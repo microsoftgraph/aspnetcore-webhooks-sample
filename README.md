@@ -157,7 +157,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 1. Still within Solution Explorer, right-click on the project name and select **Manage User Secrets**. This app uses [Secret Manager](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-2.2) configuration in storing sensitive app data - ClientId and ClientSecret.
     
-    - In the secret.json window that opens, paste the below code.
+    - In the **secret.json** window that opens, paste the below code.
         
         `"AzureAd": {
         "ClientId": "ENTER_YOUR_APP_ID",
@@ -212,6 +212,7 @@ The following files contain code that's related to connecting to Microsoft Graph
 
 **Models**  
 - [`Notification.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Models/Notification.cs) Represents a change notification. 
+- [`MessageViewModel.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Models/MessageViewModel.cs) Defines the **MessageViewModel** that represents the data displayed in the Notification view.
 
 **Helpers**  
 - [`GraphServiceClientFactory.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/GraphServiceClientFactory.cs) Initiates the SDK client used to interact with Microsoft Graph.
@@ -261,4 +262,4 @@ You can suggest changes for Microsoft Graph on [UserVoice](https://officespdev.u
 - [Microsoft Graph documentation](https://developer.microsoft.com/graph)
 
 ## Copyright
-Copyright (c) 2017 Microsoft. All rights reserved.
+Copyright (c) 2019 Microsoft. All rights reserved.

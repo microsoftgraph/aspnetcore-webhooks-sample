@@ -46,7 +46,7 @@ namespace Microsoft.Identity.Web.Client
         /// <param name="tenantId">Enables to override the tenant/account for the same identity. This is useful in the 
         /// cases where a given account is guest in other tenants, and you want to acquire tokens for a specific tenant</param>
         /// <returns>An access token to call on behalf of the user, the downstream API characterized by its scopes</returns>
-        Task<string> GetAccessTokenOnBehalfOfUser(HttpContext context, IEnumerable<string> scopes, string tenantId = null);
+        Task<string> GetAccessTokenOnBehalfOfUser(HttpContext context, IEnumerable<string> scopes, string tenantId=null);
 
         /// <summary>
         /// In a Web API, adds to the MSAL.NET cache, the account of the user for which a bearer token was received when the Web API was called.

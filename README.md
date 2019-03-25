@@ -37,61 +37,44 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 - The application ID and key from the application that you [register on the Azure Portal](#register-the-app). 
 - A public HTTPS endpoint to receive and send HTTP requests. You can host this on Microsoft Azure or another service, or you can [use ngrok](#ngrok) or a similar tool while testing.
 
-### Register the app
+### Create your app
 
-This app uses the Azure AD endpoint, so you'll register it in the [Azure Portal](https://portal.azure.com/).
+#### Choose the tenant where you want to create your app
 
-1. Sign in to the portal using your work or school account.
+1. Sign in to the [Azure portal](https://portal.azure.com) using either a work or school account.
+1. If your account is present in more than one Azure AD tenant:
+   1. Select your profile from the menu on the top right corner of the page, and then **Switch directory**.
+   1. Change your session to the Azure AD tenant where you want to create your application.
 
-2. Choose **Azure Active Directory** in the left-hand navigation pane.
+#### Register the app
 
-3. Choose **App registrations**, and then choose **New application registration**.  
+1. Navigate to the [Azure portal > App registrations](https://go.microsoft.com/fwlink/?linkid=2083908) to register your app.
+1. Select **New registration**.
+1. When the **Register an application page** appears, enter your app's registration information:
+   1. In the **Name** section, enter a meaningful name that will be displayed to users of the app. For example: `MyWebApp`
+   1. In the **Supported account types** section, select **Accounts in any organizational directory and personal Microsoft accounts (e.g. Skype, Xbox, Outlook.com)**.
+      > If there are more than one redirect URIs, you'll need to add these from the **Authentication** tab later after the app has been successfully created.
+1. Select **Register** to create the app.
+1. On the app's **Overview** page, find the **Application (client) ID** value and record it for later. You'll need this value to configure the Visual Studio configuration file for this project.
+1. In the list of pages for the app, select **Authentication**.
+   1. In the **Redirect URIs** section, select **Web** in the combo-box and enter the following redirect URIs:
+       - `https://localhost:44334/signin-oidc`
+       - `https://localhost:44334/Account/GrantPermissions`
+1. Select **Save**.
+1. From the **Certificates & secrets** page, in the **Client secrets** section, choose **New client secret**.
+   1. Enter a key description (of instance `app secret`).
+   1. Select a key duration of either **In 1 year**, **In 2 years**, or **Never Expires**.
+   1. When you click the **Add** button, the key value will be displayed. Copy the key value and save it in a safe location.
 
-4. Enter a name for the app, and choose **Create application**. 
+      You'll need this key later to configure the project in Visual Studio. This key value will not be displayed again, nor retrievable by any other means, so record it as soon as it is visible from the Azure portal.
 
-   a. Enter a friendly name for the application.
-
-   b. Choose 'Web app/API' as the **Application Type**.
-
-   c. Enter *https://localhost:44334/signin-oidc* for the **Sign-on URL**. This is the base callback URL for this sample.
-  
-   d. Click **Create**.
-
-5. Choose your new application from the list of registered applications.
-
-6. Copy and store the Application ID. This value is shown in the **Essentials** pane or in **Settings** > **Properties**.
-
-7. Optional. To enable multi-tenanted support for the app, open **Settings** > **Properties** and set **Multi-tenanted** to **Yes**.
-
-8. Open **Settings** > **Reply URLs** and add the following redirect URI:
-
-   `https://localhost:44334/Account/GrantPermissions` 
-
-   This is the callback for the *adminconsent* endpoint. The sample will have two redirect URIs: 
-    - https://localhost:44334/signin-oidc 
-    - https://localhost:44334/Account/GrantPermissions
-
-9. Configure Permissions for your application:  
-
-   a. Choose **Settings** > **Required permissions** > **Add**.
-  
-   b. Choose **Select an API** > **Microsoft Graph**, and then click **Select**.
-  
-   c. Choose **Select permissions**. Under **Application Permissions**, choose **Read mail in all mailboxes**, and then click **Select**.
-  
-   d. Click **Done**.
-
-   Keep the *User.Read* delegated permission for Azure Active Directory so users can sign into the app to initiate the subscription process.
-
-10. Choose **Settings** > **Keys**. Enter a description, choose a duration for the key, and then click **Save**.
-
-   >**Important**: Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password.
-
-11. Copy the key value--this is your app's secret. You won't be able to access this value again after you leave this blade.
-
-You'll use the application ID and secret to configure the app in Visual Studio.
-
-
+1. In the list of pages for the app, select **API permissions**.
+   1. Click the **Add a permission** button and then make sure that the **Microsoft APIs** tab is selected.
+   1. In the **Commonly used Microsoft APIs** section, select **Microsoft Graph**.
+   1. In the **Application permissions** section, make sure that the **Mail.Read.** permission is checked. Use the search box if necessary.
+    > Also, in the **Delegated permissions** section, check the User.Read delegated permission for Azure Active Directory, so users can sign into the app to initiate the subscription process.
+   1. Select the **Add permissions** button.
+   
 <a name="ngrok"></a>
 ### Set up the ngrok proxy (optional) 
 You must expose a public HTTPS endpoint to create a subscription and receive notifications from Microsoft Graph. While testing, you can use ngrok to temporarily allow messages from Microsoft Graph to tunnel to a *localhost* port on your computer. 

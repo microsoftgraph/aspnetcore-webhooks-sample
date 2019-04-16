@@ -29,8 +29,8 @@
     @if (isAuthenticated)
     {   
         <h4>Permissions</h4>
-        <p>This sample uses the OAuth2 client credentials flow and requires a tenant admin to authorize the app to access the mailboxes of all users in the tenant. The sample redirects to the <i>adminconsent</i> endpoint so an admin can consent to the <b>Mail.Read</b> application (app-only) permission.</p>
-        <p>&nbsp;&nbsp;<b>Note:</b> Currently, only the messages, events, and contacts resources support application permissions for Microsoft Graph webhooks.</p><br />
+        <p>This sample uses the OAuth2.0 auth code flow and requires a tenant admin to authorize the app to access the mailboxes of all users in the tenant. The sample redirects to the <i>adminconsent</i> endpoint so an admin can consent to the <b>Mail.Read</b> delegated permission.</p>
+        <p>&nbsp;&nbsp;<b>Note:</b> Currently, only the messages, events, drive items, and contacts resources support delegated permissions for Microsoft Graph webhooks.</p><br />
         <h4>Get started</h4>
         <p>If you're a tenant admin, choose <b>Grant admin consent</b> to sign in with your admin credentials and approve the permissions request for the tenant. This is required only once per tenant.</p>
         @using (Html.BeginForm("RequestPermissions", "Account"))

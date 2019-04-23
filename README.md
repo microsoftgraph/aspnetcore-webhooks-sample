@@ -4,9 +4,9 @@ Subscribe for [Microsoft Graph webhooks](https://developer.microsoft.com/en-us/g
 
 This sample ASP.NET Core web application shows how to subscribe for webhooks using delegated permissions. It uses OpenID Connect for sign in / sign out using the Microsoft identity platform for developers, [Microsoft Authentication Library for .NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) (MSAL.NET) to obtain an access token using the [auth code flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow), and the [Microsoft Graph Client Library for .NET](https://github.com/microsoftgraph/msgraph-sdk-dotnet) (SDK) to call Microsoft Graph on behalf of a user that has successfully signed in to the web app. These complexities have been encapsulated into the `Microsoft.Identity.Web` reusable library project. 
 
->See the list of [application permissions](https://docs.microsoft.com/en-us/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
+>See the list of [delegated permissions](https://docs.microsoft.com/en-us/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
 
-The sample app redirects to the Azure AD *adminconsent* endpoint so a tenant administrator can grant application permissions directly to the app. After the admin consents, users in the tenant can create a subscription and watch for notifications. 
+The sample app redirects to the Azure AD *adminconsent* endpoint so a tenant administrator can grant delegated permissions directly to the app. After the admin consents, users in the tenant can create a subscription and watch for notifications. 
 
 The following are common tasks that an application performs with webhooks subscriptions:
 
@@ -91,7 +91,7 @@ This app uses the Azure AD endpoint, so you'll register it in the [Azure Portal]
    - Choose **Microsoft API** > **Microsoft Graph** > **Delegated permissions**.
   
    - In the search box, type **Mail.Read** and select the first option from the list.
-   
+  
    Keep the *User.Read* delegated permission for Azure Active Directory so users can sign into the app to initiate the subscription process.
 
 1. From the **Certificates & secrets page**, for your app registration, in the **Client secrets** section, choose **New client secret**:
@@ -172,7 +172,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 ### Use the app to create a subscription
  
 
-1. Choose **Sign in** in the upper-right corner and sign in with a work or school account. 
+1. Choose **Sign in** in the upper-right corner and sign in with a work or school account.
 
 1. Consent to the **View your basic profile** and **Sign in as you** permissions. 
 

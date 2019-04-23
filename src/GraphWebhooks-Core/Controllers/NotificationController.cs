@@ -121,7 +121,7 @@ namespace GraphWebhooks_Core.Controllers
                                 
                 // Set the claims for ObjectIdentifier and TenantId, and              
                 // use the above claims for the current HttpContext
-                HttpContext.User = ClaimsPrincipalExtension.FromTenantIdAndObjectId(subscription.UserId, subscription.TenantId);
+                HttpContext.User = ClaimsPrincipalExtension.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
 
                 // Initialize the GraphServiceClient. 
                 var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>

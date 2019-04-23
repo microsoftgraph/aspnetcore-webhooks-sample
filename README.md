@@ -139,12 +139,13 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 ## Configure and run the sample
 
+1. Follow these [instructions](https://docs.microsoft.com/en-us/aspnet/core/signalr/javascript-client?view=aspnetcore-2.2) to install the ASP.NET Core SignalR Javascript client package into the app.
 1. Expose a public HTTPS notification endpoint. It can run on a service such as Microsoft Azure, or you can create a proxy web server by [using ngrok](#ngrok) or a similar tool.
 
-1. Open the **GraphWebhooks-Core.sln** sample file in Visual Studio 2017. 
+1. Open the **GraphWebhooks-Core.sln** sample file in Visual Studio 2017.
 
 1. In Solution Explorer, open the **appsettings.json** file in the root directory of the project.  
-   
+ 
    - For the **NotificationUrl** key, replace *ENTER_YOUR_URL* with the HTTPS URL. Keep the */notification/listen* portion. 
 
    If you're using ngrok, use the HTTPS URL that you copied. The value will look something like this:

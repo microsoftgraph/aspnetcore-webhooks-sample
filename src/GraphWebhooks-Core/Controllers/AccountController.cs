@@ -3,49 +3,27 @@
 *  See LICENSE in the source repository root for complete license information. 
 */
 
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using GraphWebhooks_Core.Helpers;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.AzureAD.UI;
+using Microsoft.Extensions.Configuration;
+using GraphWebhooks_Core.Infrastructure;
 
 namespace GraphWebhooks_Core.Controllers
 {
     public class AccountController : Controller
     {
+        private readonly AzureADOptions azureAdOptions;
         private readonly AppSettings appSettings;
 
-        public AccountController(IOptions<AppSettings> optionsAccessor)
+        public AccountController(IOptions<AppSettings> appSettingsAccessor,
+                                IConfiguration configuration)
         {
-            appSettings = optionsAccessor.Value;
-        }
-
-        [HttpGet]
-        public async Task SignIn()
-        {
-            if (HttpContext.User == null || !HttpContext.User.Identity.IsAuthenticated)
-            {
-                await HttpContext.Authentication.ChallengeAsync(
-                    OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/Home" });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SignOut()
-        {
-            if (HttpContext.User.Identity.IsAuthenticated)
-            {
-                await HttpContext.Authentication.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
-                await HttpContext.Authentication.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-                // Redirect to home page if the user is authenticated.
-                return RedirectToAction(nameof(HomeController.Index), "Home");
-            }
-            else return new EmptyResult();
-        }
+            appSettings = appSettingsAccessor.Value;
+            azureAdOptions = new AzureADOptions();
+            configuration.Bind("AzureAd", azureAdOptions);            
+        }               
 
         [Authorize]
         // Callback action for the `adminconsent` endpoint.
@@ -70,17 +48,10 @@ namespace GraphWebhooks_Core.Controllers
         public ActionResult RequestPermissions()
         {
             string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
-            string redirectUri = System.Net.WebUtility.UrlEncode(appSettings.BaseRedirectUri + "/Account/GrantPermissions");
+            string redirectUri = System.Net.WebUtility.UrlEncode(appSettings.BaseRedirectUrl + "/Account/GrantPermissions");
             return new RedirectResult(
-                $"{ appSettings.AADInstance }{ tenantId }/adminconsent?client_id={ appSettings.AppId }&redirect_uri={ redirectUri }"
+                $"{ azureAdOptions.Instance}{ tenantId }/adminconsent?client_id={ azureAdOptions.ClientId }&redirect_uri={ redirectUri }"
             );
-        }
-
-        [HttpGet]
-        public async Task EndSession()
-        {
-            // If AAD sends a single sign-out message to the app, end the user's session, but don't redirect to AAD for sign out.
-            await HttpContext.Authentication.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        }
+        }        
     }
 }

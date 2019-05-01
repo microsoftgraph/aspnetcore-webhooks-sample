@@ -4,21 +4,17 @@
 */
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.SignalR.Infrastructure;
 using GraphWebhooks_Core.Models;
 
 namespace GraphWebhooks_Core.SignalR
 {
-    public class NotificationService : PersistentConnection
+    public class NotificationService
     {
-        public void SendNotificationToClient(IConnectionManager connectionManager, List<MessageViewModel> messages)
+        public async Task SendNotificationToClient(IHubContext<NotificationHub> hubContext, List<MessageViewModel> messages)
         {
-            var hubContext = connectionManager.GetHubContext<NotificationHub>();
-            if (hubContext != null)
-            {
-                hubContext.Clients.All.showNotification(messages);
-            }
+            await hubContext.Clients.All.SendAsync("showNotification", messages);
         }
     }
 }

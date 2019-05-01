@@ -42,10 +42,8 @@ namespace GraphWebhooks_Core.Models
         [JsonExtensionData(ReadData = true)]
         public IDictionary<string, object> AdditionalData { get; set; }
     }
-
     public class ResourceData
     {
-
         // The ID of the resource.
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }

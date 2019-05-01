@@ -10,43 +10,47 @@ using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR.Infrastructure;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Graph;
 using GraphWebhooks_Core.Helpers;
 using GraphWebhooks_Core.Models;
 using GraphWebhooks_Core.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Web.Client;
+using Microsoft.Identity.Web;
+using GraphWebhooks_Core.Helpers.Interfaces;
 
 namespace GraphWebhooks_Core.Controllers
 {
+    
     public class NotificationController : Controller
     {
-        private readonly ISDKHelper sdkHelper;
         private readonly ISubscriptionStore subscriptionStore;
-        private readonly IConnectionManager connectionManager;
+        private readonly IHubContext<NotificationHub> notificationHub;
         private readonly ILogger logger;
+        readonly ITokenAcquisition tokenAcquisition;
 
-        public NotificationController(ISDKHelper sdkHelper,
-                                      ISubscriptionStore subscriptionStore,
-                                      IConnectionManager connectionManager,
-                                      ILogger<NotificationController> logger)
+        public NotificationController(ISubscriptionStore subscriptionStore,
+                                      IHubContext<NotificationHub> notificationHub,
+                                      ILogger<NotificationController> logger,
+                                      ITokenAcquisition tokenAcquisition)
         {
-            this.sdkHelper = sdkHelper;
             this.subscriptionStore = subscriptionStore;
-            this.connectionManager = connectionManager;
+            this.notificationHub = notificationHub;
             this.logger = logger;
+            this.tokenAcquisition = tokenAcquisition;
         }
 
-        [Authorize]
-        public ActionResult LoadView(string id)
+		[Authorize]
+		public ActionResult LoadView(string id)
         {
             ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
             return View("Notification");
         }
 
         // The notificationUrl endpoint that's registered with the webhook subscription.
-        [HttpPost]
+        [HttpPost]       
         public async Task<ActionResult> Listen()
         {
 
@@ -54,7 +58,7 @@ namespace GraphWebhooks_Core.Controllers
             // This response is required for each subscription.
             var query = QueryHelpers.ParseQuery(Request.QueryString.ToString());
             if (query.ContainsKey("validationToken"))
-            {                
+            {
                 return Content(query["validationToken"], "plain/text");
             }
 
@@ -69,7 +73,6 @@ namespace GraphWebhooks_Core.Controllers
                         JObject jsonObject = JObject.Parse(inputStream.ReadToEnd());
                         if (jsonObject != null)
                         {
-                            
                             // Notifications are sent in a 'value' array. The array might contain multiple notifications for events that are
                             // registered for the same notification endpoint, and that occur within a short timespan.
                             JArray value = JArray.Parse(jsonObject["value"].ToString());
@@ -77,11 +80,10 @@ namespace GraphWebhooks_Core.Controllers
                             {
                                 Notification current = JsonConvert.DeserializeObject<Notification>(notification.ToString());
                                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(current.SubscriptionId);
-                                
+
                                 // Verify the current client state matches the one that was sent.
                                 if (current.ClientState == subscription.ClientState)
                                 {
-
                                     // Just keep the latest notification for each resource. No point pulling data more than once.
                                     notifications[current.Resource] = current;
                                 }
@@ -89,7 +91,6 @@ namespace GraphWebhooks_Core.Controllers
 
                             if (notifications.Count > 0)
                             {
-
                                 // Query for the changed messages. 
                                 await GetChangedMessagesAsync(notifications.Values);
                             }
@@ -117,9 +118,18 @@ namespace GraphWebhooks_Core.Controllers
                 if (notification.ResourceData.ODataType != "#Microsoft.Graph.Message") continue;
 
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
+                                
+                // Set the claims for ObjectIdentifier and TenantId, and              
+                // use the above claims for the current HttpContext
+                HttpContext.User = ClaimsPrincipalExtension.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
 
-                // Initialize the GraphServiceClient. This sample uses the tenant ID the cache key.
-                GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(subscription.TenantId);
+                // Initialize the GraphServiceClient. 
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
+                {
+                    string result = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
+                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+                    return result;
+                });
 
                 MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
                 try
@@ -135,13 +145,11 @@ namespace GraphWebhooks_Core.Controllers
                     logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
                 }
             }
-            
+
             if (messages.Count > 0)
             {
                 NotificationService notificationService = new NotificationService();
-
-                // Clients use the subscribedUserId to filter for messages that belong to the current user. 
-                notificationService.SendNotificationToClient(connectionManager, messages);
+                                    await notificationService.SendNotificationToClient(this.notificationHub, messages);                
             }
         }
     }

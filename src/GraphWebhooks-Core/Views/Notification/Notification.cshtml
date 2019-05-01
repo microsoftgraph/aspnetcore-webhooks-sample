@@ -10,33 +10,40 @@
 }
 
 @section Scripts {
-    <script src="https://ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.2.1.min.js"></script>
-    <script src="/signalr/hubs"></script>
+    <script src="~/lib/@@aspnet/signalr/dist/browser/signalr.js"></script>
     <script>
-        var connection = $.hubConnection();
-        var hub = connection.createHubProxy("NotificationHub");
-        hub.on("showNotification", function (messages) {           
+
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl("/NotificationHub")
+            .configureLogging(signalR.LogLevel.Trace)
+            .build();
+
+        connection.on("showNotification", function (messages) {
+            console.log(messages);
             $.each(messages, function (index, current) {                     // Iterate through the message collection
-                if (current.SubscriberId === '@CurrentUserId'.toString()) {  // Only show the current user's messages.
-                    var message = current.Message;
+                if (current.subscriberId === '@CurrentUserId'.toString()) {  // Only show the current user's messages.
+                    
+            var message = current.message;
 
-                    var table = $("<table></table>");
-                    var header = $("<th>Message</th>").appendTo(table);
+            var table = $("<table></table>");
+            var header = $("<th>Message</th>").appendTo(table);
 
-                    for (prop in message) {                                  // Iterate through message properties
-                        var property = message[prop];
-                        var row = $("<tr></tr>");
+            for (prop in message) {                                  // Iterate through message properties
+                var property = message[prop];
+                var row = $("<tr></tr>");
 
-                        $("<td></td>").text(prop).appendTo(row);
-                        $("<td></td>").text(property).appendTo(row);
-                        table.append(row);
-                    }
-                    $("#message").append(table);
-                    $("#message").append("<br />");
-                }
-            });
+                $("<td></td>").text(prop).appendTo(row);
+                $("<td></td>").text(property).appendTo(row);
+                table.append(row);
+            }
+            $("#message").append(table);
+            $("#message").append("<br />");
+        }
+    });
+});
+        connection.start().then(function () {
+            console.log("connected");
         });
-        connection.start();
     </script>
 }
 <h2>Messages</h2>

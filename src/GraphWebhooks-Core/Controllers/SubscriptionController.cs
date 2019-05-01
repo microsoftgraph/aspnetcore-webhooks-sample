@@ -3,54 +3,61 @@
  *  See LICENSE in the source repository root for complete license information.
  */
 
-using System;
-using System.Threading.Tasks;
+using GraphWebhooks_Core.Helpers;
+using GraphWebhooks_Core.Helpers.Interfaces;
+using GraphWebhooks_Core.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Graph;
-using GraphWebhooks_Core.Helpers;
 using Microsoft.Extensions.Options;
+using Microsoft.Graph;
+using Microsoft.Identity.Web.Client;
+using System;
+using System.Threading.Tasks;
 
 namespace GraphWebhooks_Core.Controllers
 {
     [Authorize]
-    [ValidateAntiForgeryToken]
     public class SubscriptionController : Controller
     {
-        private readonly ISDKHelper sdkHelper;
         private readonly ISubscriptionStore subscriptionStore;
         private readonly AppSettings appSettings;
-        
-        public SubscriptionController(ISDKHelper sdkHelper,
-                                      ISubscriptionStore subscriptionStore,
-                                      IOptions<AppSettings> optionsAccessor)
+        private readonly ITokenAcquisition tokenAcquisition;
+
+        public SubscriptionController(ISubscriptionStore subscriptionStore,
+                                      IOptions<AppSettings> optionsAccessor,
+                                      ITokenAcquisition tokenAcquisition)
         {
-            this.sdkHelper = sdkHelper;
             this.subscriptionStore = subscriptionStore;
             appSettings = optionsAccessor.Value;
+            this.tokenAcquisition = tokenAcquisition;
         }
 
         // Create a subscription.
+        [MsalUiRequiredExceptionFilter(Scopes = new[] { Infrastructure.Constants.ScopeMailRead })]
         public async Task<IActionResult> Create()
         {
             string userId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
             string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
             string clientState = Guid.NewGuid().ToString();
+            
+            // Initialize the GraphServiceClient.                
+            var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
+            {
+               string result = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
+                      HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+                      return result;
+            });
 
             Subscription newSubscription = new Subscription();
             try
-            {
-
-                // Initialize the GraphServiceClient. 
-                // This sample passes in the tenant ID to use as a cache key.
-                GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(tenantId);
-
+            {               
                 // Create a subscription.
                 // The `Resource` property targets the `users/{user-id}` or `users/{user-principal-name}` path (not `me`) when using application permissions.
                 // The NotificationUrl requires the `https` protocol and supports custom query parameters.
+
                 newSubscription = await graphClient.Subscriptions.Request().AddAsync(new Subscription
                 {
-                    Resource = $"users/{ userId }/mailFolders('Inbox')/messages",
+                    Resource = $"users/{userId}/mailFolders('Inbox')/messages",
                     ChangeType = "created",
                     NotificationUrl = appSettings.NotificationUrl,
                     ClientState = clientState,
@@ -66,7 +73,7 @@ namespace GraphWebhooks_Core.Controllers
                     // This sample stores the client state to validate the subscription, the tenant ID to reuse tokens, and the user ID to filter
                     // messages to display by user.
                     subscriptionStore.SaveSubscriptionInfo(newSubscription.Id,
-                        newSubscription.ClientState, 
+                        newSubscription.ClientState,
                         userId,
                         tenantId);
                 }
@@ -80,7 +87,7 @@ namespace GraphWebhooks_Core.Controllers
 
                 // If a tenant admin hasn't granted consent, this operation returns an Unauthorized error.
                 // This sample caches the initial unauthorized token, so you'll need to start a new browser session.
-                ViewBag.Message = BuildErrorMessage(e); 
+                ViewBag.Message = BuildErrorMessage(e);
                 return View("Error");
             }
 
@@ -93,11 +100,20 @@ namespace GraphWebhooks_Core.Controllers
         {
             if (!string.IsNullOrEmpty(id))
             {
-                string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+
+                // Initialize the GraphServiceClient and delete the subscription.
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
+                {
+                    string result = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
+                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+                    return result;
+                });
+
+
                 try
                 {
-                    // Initialize the GraphServiceClient and delete the subscription.
-                    GraphServiceClient graphClient = sdkHelper.GetAuthenticatedClient(tenantId);
+                    
+
                     await graphClient.Subscriptions[id].Request().DeleteAsync();
                 }
                 catch (Exception e)

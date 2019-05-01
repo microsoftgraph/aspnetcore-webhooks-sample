@@ -4,6 +4,7 @@
  */
 
 using System;
+using GraphWebhooks_Core.Helpers.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace GraphWebhooks_Core.Helpers
@@ -47,12 +48,5 @@ namespace GraphWebhooks_Core.Helpers
             Tuple<string, string, string> subscriptionParams = memoryCache.Get("subscriptionId_" + subscriptionId) as Tuple<string, string, string>;
             return new SubscriptionStore(subscriptionId, subscriptionParams);
         }
-    }
-
-    public interface ISubscriptionStore
-    {
-        void SaveSubscriptionInfo(string subscriptionId, string clientState, string userId, string tenantId);
-
-        SubscriptionStore GetSubscriptionInfo(string subscriptionId);
-    }
+    }    
 }

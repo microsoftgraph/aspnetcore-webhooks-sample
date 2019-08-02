@@ -1,3 +1,22 @@
+---
+page_type: sample
+products:
+- office-outlook
+- office-365
+- ms-graph
+languages:
+- csharp
+extensions:
+  contentType: samples
+  technologies:
+  - Microsoft Graph
+  - Microsoft identity platform
+  services:
+  - Outlook
+  - Office 365
+  - Microsoft identity platform
+  createdDate: 3/3/2017 8:55:02 AM
+---
 # Microsoft Graph Webhooks Sample for ASP.NET Core
 
 Subscribe for [Microsoft Graph webhooks](https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.

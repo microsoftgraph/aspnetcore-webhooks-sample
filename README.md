@@ -1,5 +1,6 @@
 ---
 page_type: sample
+description: "This sample ASP.NET Core web application shows how to subscribe for webhooks using delegated permissions."
 products:
 - office-outlook
 - office-365

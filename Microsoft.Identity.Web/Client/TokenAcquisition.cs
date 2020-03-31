@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.AzureAD.UI;
+﻿using Microsoft.AspNetCore.Authentication.AzureAD.UI;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Identity.Client;
-using Microsoft.Identity.Client.AppConfig;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -124,7 +122,8 @@ namespace Microsoft.Identity.Web.Client
                 // Do not share the access token with ASP.NET Core otherwise ASP.NET will cache it and will not send the OAuth 2.0 request in
                 // case a further call to AcquireTokenByAuthorizationCodeAsync in the future for incremental consent (getting a code requesting more scopes)
                 // Share the ID Token
-                var result = await application.AcquireTokenByAuthorizationCodeAsync(context.ProtocolMessage.Code, scopes.Except(scopesRequestedByMsalNet));
+                var builder = application.AcquireTokenByAuthorizationCode(scopes.Except(scopesRequestedByMsalNet), context.ProtocolMessage.Code);
+                var result = await builder.ExecuteAsync();
                 context.HandleCodeRedemption(null, result.IdToken);
             }
             catch (MsalException ex)
@@ -189,7 +188,7 @@ namespace Microsoft.Identity.Web.Client
             AddAccountToCacheFromJwt(scopes,
                                      tokenValidatedContext.SecurityToken as JwtSecurityToken,
                                      tokenValidatedContext.Principal,
-                                     tokenValidatedContext.HttpContext);
+                                     tokenValidatedContext.HttpContext).RunSynchronously();
         }
 
         /// <summary>
@@ -227,7 +226,7 @@ namespace Microsoft.Identity.Web.Client
             AddAccountToCacheFromJwt(scopes,
                                            tokenValidatedContext.SecurityToken,
                                            tokenValidatedContext.Principal,
-                                           tokenValidatedContext.HttpContext);
+                                           tokenValidatedContext.HttpContext).RunSynchronously();
         }
 
         /// <summary>
@@ -310,23 +309,15 @@ namespace Microsoft.Identity.Web.Client
                 account = accounts.FirstOrDefault(a => a.Username == loginHint);
             }
 
-            AuthenticationResult result;
-            if (string.IsNullOrWhiteSpace(tenant))
-            {
-                result = await application.AcquireTokenSilentAsync(scopes.Except(scopesRequestedByMsalNet), account);
-            }
-            else
-            {
-                string authority = application.Authority.Replace(new Uri(application.Authority).PathAndQuery, $"/{tenant}/");
-                result = await application.AcquireTokenSilentAsync(scopes.Except(scopesRequestedByMsalNet), account, authority, false);
-            }
+            var builder = application.AcquireTokenSilent(scopes.Except(scopesRequestedByMsalNet), account);
+            var result = await builder.ExecuteAsync();
             return result.AccessToken;
         }
 
         /// <summary>
         /// Adds an account to the token cache from a JWT token and other parameters related to the token cache implementation
         /// </summary>
-        private void AddAccountToCacheFromJwt(IEnumerable<string> scopes, JwtSecurityToken jwtToken, ClaimsPrincipal principal, HttpContext httpContext)
+        private async Task AddAccountToCacheFromJwt(IEnumerable<string> scopes, JwtSecurityToken jwtToken, ClaimsPrincipal principal, HttpContext httpContext)
         {
             try
             {
@@ -346,7 +337,8 @@ namespace Microsoft.Identity.Web.Client
                 var application = CreateApplication(httpContext, principal);
 
                 // .Result to make sure that the cache is filled-in before the controller tries to get access tokens
-                var result = application.AcquireTokenOnBehalfOfAsync(requestedScopes.Except(scopesRequestedByMsalNet), userAssertion).Result;
+                var builder = application.AcquireTokenOnBehalfOf(requestedScopes.Except(scopesRequestedByMsalNet), userAssertion);
+                await builder.ExecuteAsync();
             }
             catch (MsalException ex)
             {

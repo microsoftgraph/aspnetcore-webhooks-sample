@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Identity.Client;
 using System.Diagnostics;
 using System.Security.Claims;
@@ -12,7 +11,12 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
     /// </summary>
     public class SessionBasedTokenCacheProvider : ITokenCacheProvider
     {
+        private readonly ITokenCacheSerializer tokenCacheSerializer;
         SessionTokenCacheProvider helper;
+        public SessionBasedTokenCacheProvider(ITokenCacheSerializer tokenCacheSerializer)
+        {
+            this.tokenCacheSerializer = tokenCacheSerializer;
+        }
 
         /// <summary>
         /// Enables the token cache serialization
@@ -24,7 +28,7 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
         public void EnableSerialization(ITokenCache tokenCache, HttpContext httpContext, ClaimsPrincipal claimsPrincipal)
         {
             string userId = claimsPrincipal.GetMsalAccountId() ?? "_Application_";
-            helper = new SessionTokenCacheProvider(tokenCache, userId, httpContext);
+            helper = new SessionTokenCacheProvider(tokenCache, userId, httpContext, tokenCacheSerializer);
             helper.GetMsalCacheInstance();
         }
     }
@@ -33,16 +37,18 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
     {
         private static readonly ReaderWriterLockSlim SessionLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
         private string UserId;
+        private readonly ITokenCacheSerializer tokenCacheSerializer;
         private string CacheId;
         private ISession session;
 
         private ITokenCache cache;
 
-        public SessionTokenCacheProvider(ITokenCache tokenCache, string userId, HttpContext httpcontext)
+        public SessionTokenCacheProvider(ITokenCache tokenCache, string userId, HttpContext httpcontext, ITokenCacheSerializer tokenCacheSerializer)
         {
             // not object, we want the SUB
             this.cache = tokenCache;
             UserId = userId;
+            this.tokenCacheSerializer = tokenCacheSerializer;
             CacheId = UserId + "_TokenCache";
             session = httpcontext.Session;
         }
@@ -65,7 +71,7 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
                 if (session.TryGetValue(CacheId, out blob))
                 {
                     Debug.WriteLine($"INFO: Deserializing session {session.Id}, cacheId {CacheId}");
-                    cache.DeserializeMsalV3(blob);
+                    tokenCacheSerializer.DeserializeMsalV3(blob);
                 }
                 else
                 {
@@ -87,7 +93,7 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
                 Debug.WriteLine($"INFO: Serializing session {session.Id}, cacheId {CacheId}");
 
                 // Reflect changes in the persistent store
-                byte[] blob = cache.SerializeMsalV3();
+                byte[] blob = tokenCacheSerializer.SerializeMsalV3();
                 session.Set(CacheId, blob);
                 session.CommitAsync().Wait();
             }

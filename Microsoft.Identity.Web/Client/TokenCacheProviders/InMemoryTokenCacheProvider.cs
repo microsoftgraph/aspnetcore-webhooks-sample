@@ -17,12 +17,14 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
         /// Constructor
         /// </summary>
         /// <param name="cache"></param>
-        public InMemoryTokenCacheProvider(IMemoryCache cache)
+        public InMemoryTokenCacheProvider(IMemoryCache cache, ITokenCacheSerializer tokenCacheSerializer)
         {
             memoryCache = cache;
+            this.tokenCacheSerializer = tokenCacheSerializer;
         }
 
         private readonly IMemoryCache memoryCache;
+        private readonly ITokenCacheSerializer tokenCacheSerializer;
 
         /// <summary>
         /// Get an MSAL.NET Token cache from the HttpContext, and possibly the AuthenticationProperties and Cookies sign-in scheme
@@ -33,7 +35,7 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
         public void EnableSerialization(ITokenCache userTokenCache, HttpContext httpContext, ClaimsPrincipal claimsPrincipal)
         {
             string userId = claimsPrincipal.GetMsalAccountId();
-            helper = new InMemoryTokenCacheHelper(userTokenCache, userId, httpContext, memoryCache);
+            helper = new InMemoryTokenCacheHelper(userTokenCache, userId, httpContext, memoryCache, tokenCacheSerializer);
             helper.GetMsalCacheInstance();
         }
     }
@@ -43,16 +45,17 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
         private readonly string UserId;
         private readonly string CacheId;
         private readonly IMemoryCache memoryCache;
-
+        private readonly ITokenCacheSerializer tokenCacheSerializer;
         private readonly ITokenCache cache;
 
-        public InMemoryTokenCacheHelper(ITokenCache tokenCache, string userId, HttpContext httpcontext, IMemoryCache aspnetInMemoryCache)
+        public InMemoryTokenCacheHelper(ITokenCache tokenCache, string userId, HttpContext httpcontext, IMemoryCache aspnetInMemoryCache, ITokenCacheSerializer tokenCacheSerializer)
         {
             // not object, we want the SUB
             cache = tokenCache;
             UserId = userId;
             CacheId = UserId + "_TokenCache";
             memoryCache = aspnetInMemoryCache;
+            this.tokenCacheSerializer = tokenCacheSerializer;
         }
 
         public ITokenCache GetMsalCacheInstance()
@@ -67,7 +70,7 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
             byte[] blob;
             if (memoryCache.TryGetValue(CacheId, out blob))
             {
-                cache.DeserializeMsalV3(blob);
+                tokenCacheSerializer.DeserializeMsalV3(blob);
             }
 
         }
@@ -75,7 +78,7 @@ namespace Microsoft.Identity.Web.Client.TokenCacheProviders
         public void Persist()
         {
             // Reflect changes in the persistent store
-            byte[] blob = cache.SerializeMsalV3();
+            byte[] blob = tokenCacheSerializer.SerializeMsalV3();
             memoryCache.Set(CacheId, blob);
         }
 

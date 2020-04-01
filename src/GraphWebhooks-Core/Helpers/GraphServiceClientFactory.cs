@@ -18,11 +18,12 @@ namespace GraphWebhooks_Core.Helpers
             string accessToken = await acquireAccessToken.Invoke();
 
             return new GraphServiceClient(new DelegateAuthenticationProvider(
-                    async (requestMessage) =>
+                    (requestMessage) =>
                     {
                         // Append the access token to the request.
                         requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
                             Infrastructure.Constants.BearerAuthorizationScheme, accessToken);
+                        return Task.CompletedTask;
                     }));
         }
     }

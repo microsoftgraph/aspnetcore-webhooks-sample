@@ -6,22 +6,22 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Authentication.AzureAD.UI;
 using Microsoft.Extensions.Configuration;
 using GraphWebhooks_Core.Infrastructure;
+using Microsoft.Identity.Web;
 
 namespace GraphWebhooks_Core.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly AzureADOptions azureAdOptions;
+        private readonly MicrosoftIdentityOptions azureAdOptions;
         private readonly AppSettings appSettings;
 
         public AccountController(IOptions<AppSettings> appSettingsAccessor,
                                 IConfiguration configuration)
         {
             appSettings = appSettingsAccessor.Value;
-            azureAdOptions = new AzureADOptions();
+            azureAdOptions = new MicrosoftIdentityOptions();
             configuration.Bind("AzureAd", azureAdOptions);            
         }               
 

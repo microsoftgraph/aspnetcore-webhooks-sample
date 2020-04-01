@@ -3,45 +3,41 @@
 *  See LICENSE in the source repository root for complete license information. 
 */
 
-using GraphWebhooks_Core.Helpers;
 using GraphWebhooks_Core.Infrastructure;
 using GraphWebhooks_Core.SignalR;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.AzureAD.UI;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Identity.Web.Client;
-using System.Security.Claims;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Identity.Web.UI;
 
 namespace GraphWebhooks_Core
 {
 
     public class Startup
-	{
-		public Startup(IConfiguration configuration)
-		{            
+    {
+        public Startup(IConfiguration configuration)
+        {
             Configuration = configuration;
-		}
+        }
 
         public IConfiguration Configuration { get; }
-        				
-		// This method gets called by the runtime. Use this method to add services to the container.
-		public void ConfigureServices(IServiceCollection services)
-		{            
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
             //default system actions and options integration with dependency system
             services.InitializeDefault(Configuration);
             //init AzureAd specific configuration
-            services.InitializeAuthentication(Configuration);            
+            services.InitializeAuthentication(Configuration);
+            services.AddControllersWithViews();
+
         }
-        		
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if(env.IsDevelopment())
+            if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -55,15 +51,14 @@ namespace GraphWebhooks_Core
             app.UseCookiePolicy();
             app.UseAuthentication();
 
-            app.UseMvc(routes =>
+            app.UseRouting();
+            app.UseAuthorization();
+            app.UseEndpoints(config =>
             {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                config.MapControllers();
+                config.MapDefaultControllerRoute();
+                config.MapHub<NotificationHub>("/NotificationHub");
             });
-
-            
-            app.UseSignalR(builder => builder.MapHub<NotificationHub>(new PathString("/NotificationHub")));
         }
-	}
+    }
 }

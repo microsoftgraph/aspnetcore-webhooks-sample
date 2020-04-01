@@ -6,12 +6,12 @@
     string preferred_username = identity.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
     <ul class="nav navbar-nav navbar-right">
         <li class="navbar-text">Hello @preferred_username</li>
-        <li><a asp-area="AzureAD" asp-controller="Account" asp-action="SignOut">Sign out</a></li>
+        <li><a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a></li>
     </ul>
 }
 else
 {  
     <ul class="nav navbar-nav navbar-right">
-        <li><a asp-area="AzureAD" asp-controller="Account" asp-action="Signin">Sign in</a></li>
+        <li><a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="Signin">Sign in</a></li>
     </ul>
 }

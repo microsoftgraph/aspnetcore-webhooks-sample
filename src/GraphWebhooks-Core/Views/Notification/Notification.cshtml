@@ -22,14 +22,12 @@
             console.log(messages);
             $.each(messages, function (index, current) {                     // Iterate through the message collection
                 if (current.subscriberId === '@CurrentUserId'.toString()) {  // Only show the current user's messages.
-                    
-            var message = current.message;
 
             var table = $("<table></table>");
-            var header = $("<th>Message</th>").appendTo(table);
+                    $("<th>Message</th>").appendTo(table);
 
-            for (prop in message) {                                  // Iterate through message properties
-                var property = message[prop];
+            for (prop in current) {                                  // Iterate through message properties
+                var property = current[prop];
                 var row = $("<tr></tr>");
 
                 $("<td></td>").text(prop).appendTo(row);

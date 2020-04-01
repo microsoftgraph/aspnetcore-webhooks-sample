@@ -41,7 +41,8 @@ namespace GraphWebhooks_Core.Infrastructure
             services.AddTransient<ISubscriptionStore, SubscriptionStore>();
             services.AddHttpContextAccessor();
             services.AddSignalR(
-                options => options.EnableDetailedErrors = true);
+                options => options.EnableDetailedErrors = true)
+                .AddJsonProtocol();
             services.AddMvc()
                 .AddMicrosoftIdentityUI();
         }

@@ -69,7 +69,7 @@ namespace GraphWebhooks_Core.Controllers
                     Dictionary<string, Notification> notifications = new Dictionary<string, Notification>();
                     using (var inputStream = new System.IO.StreamReader(Request.Body))
                     {
-                        JObject jsonObject = JObject.Parse(inputStream.ReadToEnd());
+                        JObject jsonObject = JObject.Parse(await inputStream.ReadToEndAsync());
                         if (jsonObject != null)
                         {
                             // Notifications are sent in a 'value' array. The array might contain multiple notifications for events that are

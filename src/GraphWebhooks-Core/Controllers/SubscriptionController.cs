@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
-using Microsoft.Identity.Web.Client;
+using Microsoft.Identity.Web;
 using System;
 using System.Threading.Tasks;
 
@@ -33,7 +33,7 @@ namespace GraphWebhooks_Core.Controllers
         }
 
         // Create a subscription.
-        [MsalUiRequiredExceptionFilter(Scopes = new[] { Infrastructure.Constants.ScopeMailRead })]
+        [AuthorizeForScopes(Scopes = new[] { Infrastructure.Constants.ScopeMailRead })]
         public async Task<IActionResult> Create()
         {
             string userId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
@@ -43,8 +43,7 @@ namespace GraphWebhooks_Core.Controllers
             // Initialize the GraphServiceClient.                
             var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
             {
-               string result = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
-                      HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+               string result = await tokenAcquisition.GetAccessTokenForUserAsync(new[] { Infrastructure.Constants.ScopeMailRead });
                       return result;
             });
 
@@ -104,8 +103,7 @@ namespace GraphWebhooks_Core.Controllers
                 // Initialize the GraphServiceClient and delete the subscription.
                 var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
                 {
-                    string result = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
-                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+                    string result = await tokenAcquisition.GetAccessTokenForUserAsync(new[] { Infrastructure.Constants.ScopeMailRead });
                     return result;
                 });
 

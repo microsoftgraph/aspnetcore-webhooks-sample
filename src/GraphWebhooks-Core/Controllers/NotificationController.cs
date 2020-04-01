@@ -17,7 +17,6 @@ using GraphWebhooks_Core.Models;
 using GraphWebhooks_Core.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Web.Client;
 using Microsoft.Identity.Web;
 using GraphWebhooks_Core.Helpers.Interfaces;
 
@@ -121,13 +120,12 @@ namespace GraphWebhooks_Core.Controllers
                                 
                 // Set the claims for ObjectIdentifier and TenantId, and              
                 // use the above claims for the current HttpContext
-                HttpContext.User = ClaimsPrincipalExtension.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
+                HttpContext.User = ClaimsPrincipalFactory.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
 
                 // Initialize the GraphServiceClient. 
                 var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
                 {
-                    string result = await tokenAcquisition.GetAccessTokenOnBehalfOfUser(
-                        HttpContext, new[] { Infrastructure.Constants.ScopeMailRead });
+                    string result = await tokenAcquisition.GetAccessTokenForUserAsync(new[] { Infrastructure.Constants.ScopeMailRead });
                     return result;
                 });
 

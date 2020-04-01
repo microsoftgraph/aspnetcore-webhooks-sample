@@ -5,12 +5,14 @@
 
 using GraphWebhooks_Core.Helpers;
 using GraphWebhooks_Core.Helpers.Interfaces;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Identity.Web;
-using Microsoft.Identity.Web.Client;
+using Microsoft.Identity.Web.TokenCacheProviders.InMemory;
+using Microsoft.Identity.Web.UI;
 
 namespace GraphWebhooks_Core.Infrastructure
 {
@@ -31,15 +33,17 @@ namespace GraphWebhooks_Core.Infrastructure
         public static void InitializeAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
             // Token acquisition service and its cache implementation
-            services.AddAzureAdV2Authentication(configuration)
-                    .AddMsal(new string[] { Constants.ScopeMailRead })
-                    .AddInMemoryTokenCache();            
+            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+                .AddSignIn(configuration);
+            services.AddProtectedWebApiCallsProtectedWebApi(configuration)
+                .AddInMemoryTokenCaches();            
 
             services.AddTransient<ISubscriptionStore, SubscriptionStore>();
             services.AddHttpContextAccessor();
             services.AddSignalR(
                 options => options.EnableDetailedErrors = true);
-            services.AddMvc();
+            services.AddMvc()
+                .AddMicrosoftIdentityUI();
         }
     }
 }

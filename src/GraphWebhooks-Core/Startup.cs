@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Identity.Web.UI;
 
 namespace GraphWebhooks_Core
 {
@@ -30,9 +31,7 @@ namespace GraphWebhooks_Core
             services.InitializeDefault(Configuration);
             //init AzureAd specific configuration
             services.InitializeAuthentication(Configuration);
-            services.AddMvc();
             services.AddControllersWithViews();
-            services.AddSignalR();
 
         }
 
@@ -52,6 +51,8 @@ namespace GraphWebhooks_Core
             app.UseCookiePolicy();
             app.UseAuthentication();
 
+            app.UseRouting();
+            app.UseAuthorization();
             app.UseEndpoints(config =>
             {
                 config.MapControllers();

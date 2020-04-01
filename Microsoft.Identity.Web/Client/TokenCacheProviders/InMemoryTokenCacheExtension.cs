@@ -2,6 +2,7 @@
 
 namespace Microsoft.Identity.Web.Client
 {
+    using Microsoft.Identity.Client;
     using TokenCacheProviders;
     /// <summary>
     /// Extension class enabling adding the CookieBasedTokenCache implementation service
@@ -19,6 +20,7 @@ namespace Microsoft.Identity.Web.Client
 
             // Token acquisition service
             services.AddSingleton<ITokenCacheProvider, InMemoryTokenCacheProvider>();
+            services.AddSingleton<ITokenCacheSerializer, TokenCache>();
             return services;
         }
     }

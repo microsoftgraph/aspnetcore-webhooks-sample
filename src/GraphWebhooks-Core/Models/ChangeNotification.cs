@@ -10,7 +10,7 @@ using System.Collections.Generic;
 namespace GraphWebhooks_Core.Models
 {
     // A change notification.
-    public class Notification
+    public class ChangeNotification
     {
         // The type of change.
         [JsonProperty(PropertyName = "changeType")]

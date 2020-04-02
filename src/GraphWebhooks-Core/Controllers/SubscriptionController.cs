@@ -5,7 +5,7 @@
 
 using GraphWebhooks_Core.Helpers;
 using GraphWebhooks_Core.Helpers.Interfaces;
-using GraphWebhooks_Core.Infrastructure;
+using GraphWebhooks_Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -20,16 +20,19 @@ namespace GraphWebhooks_Core.Controllers
     public class SubscriptionController : Controller
     {
         private readonly ISubscriptionStore subscriptionStore;
-        private readonly AppSettings appSettings;
         private readonly ITokenAcquisition tokenAcquisition;
+        private readonly KeyVaultManager keyVaultManager;
+        private readonly IOptions<SubscriptionOptions> subscriptionOptions;
 
         public SubscriptionController(ISubscriptionStore subscriptionStore,
-                                      IOptions<AppSettings> optionsAccessor,
-                                      ITokenAcquisition tokenAcquisition)
+                                      ITokenAcquisition tokenAcquisition,
+                                      KeyVaultManager keyVaultManager,
+                                      IOptions<SubscriptionOptions> subscriptionOptions)
         {
             this.subscriptionStore = subscriptionStore;
-            appSettings = optionsAccessor.Value;
             this.tokenAcquisition = tokenAcquisition;
+            this.keyVaultManager = keyVaultManager ?? throw new ArgumentNullException(nameof(keyVaultManager));
+            this.subscriptionOptions = subscriptionOptions ?? throw new ArgumentNullException(nameof(subscriptionOptions));
         }
 
         // Create a subscription.
@@ -40,7 +43,8 @@ namespace GraphWebhooks_Core.Controllers
             string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
             string clientState = Guid.NewGuid().ToString();
             
-            // Initialize the GraphServiceClient.                
+            // Initialize the GraphServiceClient
+            //TODO add support for apponly
             var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
             {
                string result = await tokenAcquisition.GetAccessTokenForUserAsync(new[] { Infrastructure.Constants.ScopeMailRead });
@@ -49,19 +53,24 @@ namespace GraphWebhooks_Core.Controllers
 
             Subscription newSubscription = new Subscription();
             try
-            {               
+            {
                 // Create a subscription.
                 // The `Resource` property targets the `users/{user-id}` or `users/{user-principal-name}` path (not `me`) when using application permissions.
                 // The NotificationUrl requires the `https` protocol and supports custom query parameters.
 
+                string encryptionCertificate = subscriptionOptions.Value.IncludeResourceData ? await keyVaultManager.GetEncryptionCertificate().ConfigureAwait(false) : null;
+                string encryptionCertificateId = subscriptionOptions.Value.IncludeResourceData ? await keyVaultManager.GetEncryptionCertificateId().ConfigureAwait(false) : null;
+
                 newSubscription = await graphClient.Subscriptions.Request().AddAsync(new Subscription
                 {
-                    Resource = $"users/{userId}/mailFolders('Inbox')/messages",
-                    ChangeType = "created",
-                    NotificationUrl = appSettings.NotificationUrl,
+                    Resource = subscriptionOptions.Value.Resource,
+                    ChangeType = subscriptionOptions.Value.ChangeType,
+                    NotificationUrl = subscriptionOptions.Value.NotificationUrl,
                     ClientState = clientState,
-                    //ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 4230, 0) // current maximum lifespan for messages
-                    ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 15, 0)     // shorter duration useful for testing
+                    ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 15, 0),     // 4230 minutes is the current max lifetime, shorter duration useful for testing
+                    EncryptionCertificate = encryptionCertificate,
+                    EncryptionCertificateId = encryptionCertificateId,
+                    IncludeResourceData = subscriptionOptions.Value.IncludeResourceData
                 });
 
                 // Verify client state, then store the subscription ID and client state to validate incoming notifications.

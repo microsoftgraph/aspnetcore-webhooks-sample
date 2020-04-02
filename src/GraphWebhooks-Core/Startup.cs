@@ -34,6 +34,7 @@ namespace GraphWebhooks_Core
             services.AddControllersWithViews();
 
             services.Configure<KeyVaultOptions>(Configuration.GetSection("KeyVaultSettings"));
+            services.Configure<SubscriptionOptions>(Configuration.GetSection("SubscriptionSettings"));
             services.AddSingleton<KeyVaultManager>();
         }
 

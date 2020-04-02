@@ -19,10 +19,11 @@ using Microsoft.Identity.Web;
 using GraphWebhooks_Core.Helpers.Interfaces;
 using System.Linq;
 using Microsoft.Extensions.Options;
+using System.IO;
 
 namespace GraphWebhooks_Core.Controllers
 {
-    
+
     public class NotificationController : Controller
     {
         private readonly ISubscriptionStore subscriptionStore;
@@ -47,24 +48,24 @@ namespace GraphWebhooks_Core.Controllers
             this.keyVaultManager = keyVaultManager ?? throw new ArgumentNullException(nameof(keyVaultManager));
         }
 
-		[Authorize]
-		public ActionResult LoadView(string id)
+        [Authorize]
+        public ActionResult LoadView(string id)
         {
             ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
             return View("Notification");
         }
 
         // The notificationUrl endpoint that's registered with the webhook subscription.
-        [HttpPost]       
+        [HttpPost]
         public async Task<IActionResult> Listen([FromQuery]string validationToken = null)
         {
-            if(string.IsNullOrEmpty(validationToken))
+            if (string.IsNullOrEmpty(validationToken))
             {
                 try
                 {
                     // Parse the received notifications.
-                    Dictionary<string, Notification> plainNotifications = new Dictionary<string, Notification>();
-                    using var inputStream = new System.IO.StreamReader(Request.Body);
+                    var plainNotifications = new Dictionary<string, ChangeNotification>();
+                    using var inputStream = new StreamReader(Request.Body);
                     var collection = JsonConvert.DeserializeObject<NotificationCollection>(await inputStream.ReadToEndAsync());
                     foreach (var notification in collection.Value.Where(x => x.EncryptedContent == null))
                     {
@@ -131,7 +132,7 @@ namespace GraphWebhooks_Core.Controllers
 
         // Get information about the changed messages and send to browser via SignalR.
         // A production application would typically queue a background job for reliability.
-        private async Task GetChangedMessagesAsync(IEnumerable<Notification> notifications)
+        private async Task GetChangedMessagesAsync(IEnumerable<ChangeNotification> notifications)
         {
             List<MessageViewModel> messages = new List<MessageViewModel>();
             foreach (var notification in notifications)
@@ -139,12 +140,14 @@ namespace GraphWebhooks_Core.Controllers
                 if (notification.ResourceData.ODataType != "#Microsoft.Graph.Message") continue;
 
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
-                                
+
                 // Set the claims for ObjectIdentifier and TenantId, and              
                 // use the above claims for the current HttpContext
-                HttpContext.User = ClaimsPrincipalFactory.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
+                if (!string.IsNullOrEmpty(subscription.UserId))
+                    HttpContext.User = ClaimsPrincipalFactory.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
 
-                // Initialize the GraphServiceClient. 
+                // Initialize the GraphServiceClient.
+                //TODO add support for apponly
                 var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
                 {
                     string result = await tokenAcquisition.GetAccessTokenForUserAsync(new[] { Infrastructure.Constants.ScopeMailRead });
@@ -154,7 +157,7 @@ namespace GraphWebhooks_Core.Controllers
                 MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
                 try
                 {
-                    messages.Add(new MessageViewModel(await request.GetAsync(), subscription.UserId));
+                    messages.Add(new MessageViewModel(await request.GetAsync()));
                 }
                 catch (ServiceException se)
                 {
@@ -169,7 +172,7 @@ namespace GraphWebhooks_Core.Controllers
             if (messages.Count > 0)
             {
                 NotificationService notificationService = new NotificationService();
-                                    await notificationService.SendNotificationToClient(notificationHub, messages);                
+                await notificationService.SendNotificationToClient(notificationHub, messages);
             }
         }
     }

@@ -21,7 +21,6 @@
         connection.on("showNotification", function (messages) {
             console.log(messages);
             $.each(messages, function (index, current) {                     // Iterate through the message collection
-                if (current.subscriberId === '@CurrentUserId'.toString()) {  // Only show the current user's messages.
 
             var table = $("<table></table>");
                     $("<th>Message</th>").appendTo(table);
@@ -36,7 +35,6 @@
             }
             $("#message").append(table);
             $("#message").append("<br />");
-        }
     });
 });
         connection.start().then(function () {

@@ -69,30 +69,23 @@ namespace GraphWebhooks_Core.Controllers
                     Dictionary<string, Notification> notifications = new Dictionary<string, Notification>();
                     using (var inputStream = new System.IO.StreamReader(Request.Body))
                     {
-                        JObject jsonObject = JObject.Parse(await inputStream.ReadToEndAsync());
-                        if (jsonObject != null)
+                        var collection = JsonConvert.DeserializeObject<NotificationCollection>(await inputStream.ReadToEndAsync());
+                        foreach (var notification in collection.Value)
                         {
-                            // Notifications are sent in a 'value' array. The array might contain multiple notifications for events that are
-                            // registered for the same notification endpoint, and that occur within a short timespan.
-                            JArray value = JArray.Parse(jsonObject["value"].ToString());
-                            foreach (var notification in value)
-                            {
-                                Notification current = JsonConvert.DeserializeObject<Notification>(notification.ToString());
-                                SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(current.SubscriptionId);
+                            SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
 
-                                // Verify the current client state matches the one that was sent.
-                                if (current.ClientState == subscription.ClientState)
-                                {
-                                    // Just keep the latest notification for each resource. No point pulling data more than once.
-                                    notifications[current.Resource] = current;
-                                }
-                            }
-
-                            if (notifications.Count > 0)
+                            // Verify the current client state matches the one that was sent.
+                            if (notification.ClientState == subscription.ClientState)
                             {
-                                // Query for the changed messages. 
-                                await GetChangedMessagesAsync(notifications.Values);
+                                // Just keep the latest notification for each resource. No point pulling data more than once.
+                                notifications[notification.Resource] = notification;
                             }
+                        }
+
+                        if (notifications.Count > 0)
+                        {
+                            // Query for the changed messages. 
+                            await GetChangedMessagesAsync(notifications.Values);
                         }
                     }
                 }

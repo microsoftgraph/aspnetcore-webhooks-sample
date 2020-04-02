@@ -41,6 +41,11 @@ namespace GraphWebhooks_Core.Models
         // Property bag for unknown properties. 
         [JsonExtensionData(ReadData = true)]
         public IDictionary<string, object> AdditionalData { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Encrypted Notification Data.
+        /// </summary>
+        public EncryptedContent EncryptedContent { get; set; }
     }
     public class ResourceData
     {

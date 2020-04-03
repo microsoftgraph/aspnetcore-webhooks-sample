@@ -12,7 +12,7 @@ namespace GraphWebhooks_Core.SignalR
 {
     public class NotificationService
     {
-        public async Task SendNotificationToClient(IHubContext<NotificationHub> hubContext, List<MessageViewModel> messages)
+        public async Task SendNotificationToClient(IHubContext<NotificationHub> hubContext, List<NotificationViewModel> messages)
         {
             await hubContext.Clients.All.SendAsync("showNotification", messages);
         }

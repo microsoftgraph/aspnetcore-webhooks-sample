@@ -35,7 +35,7 @@ namespace GraphWebhooks_Core.Infrastructure
             // Token acquisition service and its cache implementation
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddSignIn(configuration);
-            services.AddWebAppCallsProtectedWebApi(configuration, new string[] { Constants.ScopeMailRead })
+            services.AddWebAppCallsProtectedWebApi(configuration, new string[] { configuration.GetValue<string>("SubscriptionSettings:Scope") })
                 .AddInMemoryTokenCaches();
 
             services.AddTransient<ISubscriptionStore, SubscriptionStore>();

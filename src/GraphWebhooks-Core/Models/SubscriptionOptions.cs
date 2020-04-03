@@ -6,5 +6,6 @@
         public string NotificationUrl { get; set; }
         public string Resource { get; set; }
         public string ChangeType { get; set; }
+        public string Scope { get; set; }
     }
 }

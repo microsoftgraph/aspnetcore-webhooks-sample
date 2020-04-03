@@ -20,6 +20,7 @@ using GraphWebhooks_Core.Helpers.Interfaces;
 using System.Linq;
 using Microsoft.Extensions.Options;
 using System.IO;
+using GraphWebhooks_Core.Infrastructure;
 
 namespace GraphWebhooks_Core.Controllers
 {
@@ -32,13 +33,18 @@ namespace GraphWebhooks_Core.Controllers
         readonly ITokenAcquisition tokenAcquisition;
         private readonly IOptions<MicrosoftIdentityOptions> identityOptions;
         private readonly KeyVaultManager keyVaultManager;
+        private readonly IOptions<AppSettings> appSettings;
+        private readonly IOptions<SubscriptionOptions> subscriptionOptions;
+        private readonly NotificationService notificationService = new NotificationService();
 
         public NotificationController(ISubscriptionStore subscriptionStore,
                                       IHubContext<NotificationHub> notificationHub,
                                       ILogger<NotificationController> logger,
                                       ITokenAcquisition tokenAcquisition,
                                       IOptions<MicrosoftIdentityOptions> identityOptions,
-                                      KeyVaultManager keyVaultManager)
+                                      KeyVaultManager keyVaultManager,
+                                      IOptions<AppSettings> appSettings,
+                                      IOptions<SubscriptionOptions> subscriptionOptions)
         {
             this.subscriptionStore = subscriptionStore;
             this.notificationHub = notificationHub;
@@ -46,10 +52,17 @@ namespace GraphWebhooks_Core.Controllers
             this.tokenAcquisition = tokenAcquisition;
             this.identityOptions = identityOptions ?? throw new ArgumentNullException(nameof(identityOptions));
             this.keyVaultManager = keyVaultManager ?? throw new ArgumentNullException(nameof(keyVaultManager));
+            this.appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
+            this.subscriptionOptions = subscriptionOptions ?? throw new ArgumentNullException(nameof(subscriptionOptions));
         }
 
         [Authorize]
         public ActionResult LoadView(string id)
+        {
+            ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
+            return View("Notification");
+        }
+        public ActionResult LoadViewAppOnly(string id)
         {
             ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
             return View("Notification");
@@ -76,7 +89,7 @@ namespace GraphWebhooks_Core.Controllers
                         {
                             // Just keep the latest notification for each resource. No point pulling data more than once.
                             plainNotifications[notification.Resource] = notification;
-                        }//TODO return bad request if state is wrong?
+                        }
                     }
 
                     if (plainNotifications.Count > 0)
@@ -93,6 +106,7 @@ namespace GraphWebhooks_Core.Controllers
                             .Aggregate((x, y) => x && y);
                         if (areValidationTokensValid)
                         {
+                            List<NotificationViewModel> notificationsToDisplay = new List<NotificationViewModel>();
                             foreach (var notificationItem in collection.Value.Where(x => x.EncryptedContent != null))
                             {
                                 string decryptedpublisherNotification =
@@ -102,9 +116,10 @@ namespace GraphWebhooks_Core.Controllers
                                     notificationItem.EncryptedContent.DataSignature,
                                     await keyVaultManager.GetDecryptionCertificate().ConfigureAwait(false));
 
-                                Dictionary<string, object> resourceDataObject = JsonConvert.DeserializeObject<Dictionary<string, object>>(decryptedpublisherNotification);
-                                Console.WriteLine($"Decrypted Notification: {decryptedpublisherNotification}");
+                                notificationsToDisplay.Add(new NotificationViewModel(decryptedpublisherNotification));
                             }
+
+                            await notificationService.SendNotificationToClient(notificationHub, notificationsToDisplay);
                             return Accepted();
                         }
                         else
@@ -117,7 +132,6 @@ namespace GraphWebhooks_Core.Controllers
                 {
                     logger.LogError($"ParsingNotification: { ex.Message }");
 
-                    // TODO: Handle the exception. 
                     // Still return a 202 so the service doesn't resend the notification.
                 }
                 return Accepted();
@@ -134,11 +148,9 @@ namespace GraphWebhooks_Core.Controllers
         // A production application would typically queue a background job for reliability.
         private async Task GetChangedMessagesAsync(IEnumerable<ChangeNotification> notifications)
         {
-            List<MessageViewModel> messages = new List<MessageViewModel>();
+            List<NotificationViewModel> notificationsToDisplay = new List<NotificationViewModel>();
             foreach (var notification in notifications)
             {
-                if (notification.ResourceData.ODataType != "#Microsoft.Graph.Message") continue;
-
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
 
                 // Set the claims for ObjectIdentifier and TenantId, and              
@@ -147,32 +159,42 @@ namespace GraphWebhooks_Core.Controllers
                     HttpContext.User = ClaimsPrincipalFactory.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
 
                 // Initialize the GraphServiceClient.
-                //TODO add support for apponly
-                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
                 {
-                    string result = await tokenAcquisition.GetAccessTokenForUserAsync(new[] { Infrastructure.Constants.ScopeMailRead });
-                    return result;
+                    if (string.IsNullOrEmpty(subscription.UserId))
+                        return await tokenAcquisition.AcquireTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
+                    else
+                        return await tokenAcquisition.GetAccessTokenForUserAsync(new[] { subscriptionOptions.Value.Scope });
                 });
 
-                MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
-                try
+                if (notification.ResourceData.ODataType == "#Microsoft.Graph.Message")
                 {
-                    messages.Add(new MessageViewModel(await request.GetAsync()));
-                }
-                catch (ServiceException se)
-                {
-                    string errorMessage = se.Error.Message;
-                    string requestId = se.Error.InnerError.AdditionalData["request-id"].ToString();
-                    string requestDate = se.Error.InnerError.AdditionalData["date"].ToString();
+                    var request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
+                    try
+                    {
+                        var responseValue = await request.GetAsync();
+                        notificationsToDisplay.Add(new NotificationViewModel(new
+                        {
+                            From = responseValue?.From?.EmailAddress?.Address,
+                            responseValue?.Subject,
+                            SentDateTime = responseValue?.SentDateTime.HasValue ?? false ? responseValue?.SentDateTime.Value.ToString() : string.Empty,
+                            To = responseValue?.ToRecipients?.Select(x => x.EmailAddress.Address)?.ToList(),
+                        }));
+                    }
+                    catch (ServiceException se)
+                    {
+                        string errorMessage = se.Error.Message;
+                        string requestId = se.Error.InnerError.AdditionalData["request-id"].ToString();
+                        string requestDate = se.Error.InnerError.AdditionalData["date"].ToString();
 
-                    logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
+                        logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
+                    }
                 }
             }
 
-            if (messages.Count > 0)
+            if (notificationsToDisplay.Count > 0)
             {
-                NotificationService notificationService = new NotificationService();
-                await notificationService.SendNotificationToClient(notificationHub, messages);
+                await notificationService.SendNotificationToClient(notificationHub, notificationsToDisplay);
             }
         }
     }

@@ -1,12 +1,12 @@
 <!--  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
         See LICENSE in the source repository root for complete license information. -->
 
-@model GraphWebhooks_Core.Models.MessageViewModel
+@model GraphWebhooks_Core.Models.NotificationViewModel
 
 @{
     ViewBag.Title = "Notification";
-    string CurrentUserId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
     string SubscriptionId = ViewBag.CurrentSubscriptionId;
+    bool isAuthenticated = User.Identity.IsAuthenticated;
 }
 
 @section Scripts {
@@ -23,7 +23,7 @@
             $.each(messages, function (index, current) {                     // Iterate through the message collection
 
             var table = $("<table></table>");
-                    $("<th>Message</th>").appendTo(table);
+                    $("<th>Notification</th>").appendTo(table);
 
             for (prop in current) {                                  // Iterate through message properties
                 var property = current[prop];
@@ -43,12 +43,12 @@
     </script>
 }
 <h2>Messages</h2>
-<p>You'll get a notification when your user receives an email. The messages display below.</p>
-<p><b>Note:</b> It may take several seconds for the page to update after the user receives a message.</p>
+<p>You'll get a notification when performing the action you subscribed for. The notifications will be displayed below.</p>
+<p><b>Note:</b> It may take several seconds for the page to update.</p>
 <br />
 <div id="message"></div>
 <div>
-    @using (Html.BeginForm("Delete", "Subscription"))
+    @using (Html.BeginForm($"Delete{(isAuthenticated ? string.Empty : "AppOnly")}", "Subscription"))
     {
         @Html.Hidden("id", @SubscriptionId)
         <button type="submit">Delete subscription</button>

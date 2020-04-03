@@ -9,7 +9,7 @@
 
 <div>
     <p>You can subscribe to webhooks for specific resources (such as Outlook messages or events and OneDrive files) to get notified about changes to the resource.</p>
-    <p>This sample creates a subscription for the signed-in user's <i>/mailFolders('Inbox')/messages</i> resource and the <i>created</i> change type. A subscription object looks like this:</p>
+    <p>This sample creates a subscription for the resources and the change type configured in the appsettings.json file. A subscription object looks like this:</p>
     <pre>
     {
         Resource = "users/{user-id}/mailFolders('Inbox')/messages",
@@ -24,24 +24,23 @@
     @if (!isAuthenticated)
     {
         <br />
-        <p>Choose <b>Sign in</b> at the top of the page and sign in with your work or school account.</p>
+        <p>Choose <b>Sign in</b> at the top of the page and sign in with your work or school account to use this sample with a user delegated context.</p>
+        <p>Alternatively you can use this sample with an app only context if you DO NOT sign in.</p>
     }
-    @if (isAuthenticated)
-    {   
-        <h4>Permissions</h4>
-        <p>This sample uses the OAuth2.0 auth code flow and requires a tenant admin to authorize the app to access the mailboxes of all users in the tenant. The sample redirects to the <i>adminconsent</i> endpoint so an admin can consent to the <b>Mail.Read</b> delegated permission.</p>
-        <p>&nbsp;&nbsp;<b>Note:</b> Currently, only the messages, events, drive items, and contacts resources support delegated permissions for Microsoft Graph webhooks.</p><br />
-        <h4>Get started</h4>
-        <p>If you're a tenant admin, choose <b>Grant admin consent</b> to sign in with your admin credentials and approve the permissions request for the tenant. This is required only once per tenant.</p>
-        @using (Html.BeginForm("RequestPermissions", "Account"))
-        {
-            <button type="submit">Grant admin consent</button>
-        }
-        <br />
-        <p>If a tenant admin has already granted permissions, choose <b>Create subscription</b>.</p>
-        @using (Html.BeginForm("Create", "Subscription"))
-        {
-            <button type="submit">Create subscription</button>
-        }
+    <h4>Permissions</h4>
+    <p>This sample uses the OAuth2.0 auth code flow and requires a tenant admin to authorize the app to access the resources in the tenant. The sample redirects to the <i>adminconsent</i> endpoint so an admin can consent to the required permission.</p>
+    <p>This sample supports both a user delegated context (the calls to the Graph will be made on behalf of the currently signed-in user) and app only context (the calls to the graph will be made as the application without carrying any user identity).</p>
+    <p>For a list of supported resources and supported contexts, please refer to the <a href="https://docs.microsoft.com/en-us/graph/api/subscription-post-subscriptions?view=graph-rest-beta&tabs=http#permissions">documentation</a></p>
+    <h4>Get started</h4>
+    <p>If you're a tenant admin, choose <b>Grant admin consent</b> to sign in with your admin credentials and approve the permissions request for the tenant. This is required only once per tenant.</p>
+    @using (Html.BeginForm("RequestPermissions", "Account"))
+    {
+        <button type="submit">Grant admin consent</button>
+    }
+    <br />
+    <p>If a tenant admin has already granted permissions, choose <b>Create subscription</b>.</p>
+    @using (Html.BeginForm($"Create{(isAuthenticated ? string.Empty : "AppOnly")}", "Subscription"))
+    {
+        <button type="submit">Create subscription</button>
     }
 </div>

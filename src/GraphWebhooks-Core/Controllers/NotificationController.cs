@@ -190,6 +190,10 @@ namespace GraphWebhooks_Core.Controllers
                         logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
                     }
                 }
+                else
+                {
+                    notificationsToDisplay.Add(new NotificationViewModel(notification.Resource));
+                }
             }
 
             if (notificationsToDisplay.Count > 0)

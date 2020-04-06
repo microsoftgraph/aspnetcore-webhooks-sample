@@ -26,7 +26,7 @@ extensions:
 
 ![.NET Core](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/workflows/.NET%20Core/badge.svg?branch=master)
 
-Subscribe for [Microsoft Graph webhooks](https://developer.microsoft.com/graph/docs/api-reference/v1.0/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
+Subscribe for [Microsoft Graph webhooks](https://docs.microsoft.com/graph/api/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
 
 This sample ASP.NET Core web application shows how to subscribe for webhooks using delegated permissions. It uses OpenID Connect for sign in / sign out using the Microsoft identity platform for developers, [Microsoft Authentication Library for .NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) (MSAL.NET) to obtain an access token using the [auth code flow](https://docs.microsoft.com/azure/active-directory/develop/v2-oauth2-auth-code-flow), and the [Microsoft Graph Client Library for .NET](https://github.com/microsoftgraph/msgraph-sdk-dotnet) (SDK) to call Microsoft Graph on behalf of a user that has successfully signed in to the web app. These complexities have been encapsulated into the `Microsoft.Identity.Web` reusable library project.
 
@@ -37,7 +37,7 @@ The sample app redirects to the Azure AD *adminconsent* endpoint so a tenant adm
 The following are common tasks that an application performs with webhooks subscriptions:
 
 - Get consent to subscribe to users' resources and then get an access token.
-- Use the access token to [create a subscription](https://developer.microsoft.com/graph/docs/api-reference/v1.0/api/subscription_post_subscriptions) to a resource.
+- Use the access token to [create a subscription](https://docs.microsoft.com/graph/api/subscription-post-subscriptions) to a resource.
 - Send back a validation token to confirm the notification URL.
 - Listen for notifications from Microsoft Graph and respond with a 202 status code.
 - Request more information about changed resources using data in the notification.
@@ -250,9 +250,9 @@ You can suggest changes for Microsoft Graph on [UserVoice](https://microsoftgrap
 
 - [Microsoft Graph Webhooks sample for ASP.NET 4.6](https://github.com/microsoftgraph/aspnet-webhooks-rest-sample) (Delegated permissions)
 - [Microsoft Graph Webhooks sample for Node.js](https://github.com/microsoftgraph/nodejs-webhooks-rest-sample) (Delegated permissions)
-- [Working with Webhooks in Microsoft Graph](https://developer.microsoft.com/graph/docs/api-reference/v1.0/resources/webhooks)
-- [Subscription resource](https://developer.microsoft.com/graph/docs/api-reference/v1.0/resources/subscription)
-- [Microsoft Graph documentation](https://developer.microsoft.com/graph)
+- [Working with Webhooks in Microsoft Graph](https://docs.microsoft.com/graph/api/resources/webhooks)
+- [Subscription resource](https://docs.microsoft.com/graph/api/resources/subscription)
+- [Microsoft Graph documentation](https://docs.microsoft.com/graph)
 
 ## Copyright
 

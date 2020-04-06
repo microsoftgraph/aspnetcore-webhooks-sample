@@ -22,15 +22,30 @@ extensions:
   - Microsoft identity platform
   createdDate: 3/3/2017 8:55:02 AM
 ---
-# Microsoft Graph Webhooks Sample for ASP.NET Core
+# Microsoft Graph Change Notifications Sample for ASP.NET Core
 
 ![.NET Core](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/workflows/.NET%20Core/badge.svg?branch=master)
 
 Subscribe for [Microsoft Graph webhooks](https://docs.microsoft.com/graph/api/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
 
-This sample ASP.NET Core web application shows how to subscribe for webhooks using delegated permissions. It uses OpenID Connect for sign in / sign out using the Microsoft identity platform for developers, [Microsoft Authentication Library for .NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) (MSAL.NET) to obtain an access token using the [auth code flow](https://docs.microsoft.com/azure/active-directory/develop/v2-oauth2-auth-code-flow), and the [Microsoft Graph Client Library for .NET](https://github.com/microsoftgraph/msgraph-sdk-dotnet) (SDK) to call Microsoft Graph on behalf of a user that has successfully signed in to the web app. These complexities have been encapsulated into the `Microsoft.Identity.Web` reusable library project.
+This sample ASP.NET Core web application shows how to subscribe for change notifications.
 
->See the list of [delegated permissions](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
+This sample uses:
+
+- [Microsoft Authentication Library for .NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) (MSAL.NET) to obtain an access token
+- The [Microsoft Graph Client Library for .NET](https://github.com/microsoftgraph/msgraph-sdk-dotnet) (SDK) to call Microsoft Graph.
+- The [Microsoft.Identity.Web](https://github.com/AzureAD/microsoft-identity-web) library to abstract some of the complexities.
+
+This sample supports user-delegated authentication and uses:
+
+- OpenID Connect for sign in / sign out using the Microsoft identity platform for developers
+- The [auth code flow](https://docs.microsoft.com/azure/active-directory/develop/v2-oauth2-auth-code-flow)
+
+This sample supports app-only authentication and uses:
+
+- The [client grant flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow) to obtain an access token.
+
+>See the list of [permissions](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
 
 The sample app redirects to the Azure AD *adminconsent* endpoint so a tenant administrator can grant delegated permissions directly to the app. After the admin consents, users in the tenant can create a subscription and watch for notifications.
 

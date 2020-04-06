@@ -227,30 +227,23 @@ The following files contain code that's related to connecting to Microsoft Graph
     - Bootstrapping the web resource from the `Startup.cs` file in the application by just calling a few methods.
 
 
-## Troubleshooting 
+## Troubleshooting
 
-| Issue | Resolution |
-|:------|:------|
-| You get a 403 Forbidden response when you attempt to create a subscription. | Make sure that your app registration includes the **Mail.Read** application permission for Microsoft Graph (as described in the [Register the app](#register-the-app) section) and that a tenant administrator has granted consent to the app. |  
-| You do not receive notifications. | If you're using ngrok, you can use the web interface (http://127.0.0.1:4040) to see whether the notification is being received. If you're not using ngrok, monitor the network traffic using the tools your hosting service provides, or try using ngrok.<br />If Microsoft Graph is not sending notifications, please open a [Stack Overflow](https://stackoverflow.com/questions/tagged/MicrosoftGraph) issue tagged *[MicrosoftGraph]*. Include the subscription ID, the time it was created, and the request ID from the response (if you have it).<br /><br />Known issue: Occasionally the notification is received, and the retrieved message is sent to NotificationService, but the SignalR client in this sample does not update. When this happens, it's usually the first notification after the subscription is created. |  
-| You get a *Subscription validation request timed out* response. | This indicates that Microsoft Graph did not receive a validation reponse within 10 seconds.<br /><br />If you're using ngrok, make sure that your endpoint is accessible and that you specified your project's HTTP port for the tunnel (not HTTPS). |  
-| You get errors while installing packages. | Make sure the local path where you placed the solution is not too long/deep. Moving the solution closer to the root drive resolves this issue. |
-| You get build errors related to Microsoft.AspNetCore.SignalR.Server | Type this command in the Package Manager Console: 'Install-Package Microsoft.AspNetCore.SignalR.Server -Version 0.2.0-rtm-22752 -Source https://dotnet.myget.org/F/aspnetcore-master/api/v3/index.json' |
-| The app opens to a *Server Error in '/' Application. The resource cannot be found.* browser page. | Make sure that a CSHTML view file isn't the active tab when you run the app from Visual Studio. |
+See the dedicated [troubleshooting page](./TROUBLESHOOTING.md).
 
 ## Contributing
 
-If you'd like to contribute to this sample, see [CONTRIBUTING.MD](/CONTRIBUTING.md).
+If you'd like to contribute to this sample, see [CONTRIBUTING.MD](./CONTRIBUTING.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Questions and comments
 
-We'd love to get your feedback about the Microsoft Graph Webhooks sample for ASP.NET Core. You can send your questions and suggestions to us in the [Issues](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/issues) section of this repository.
+We'd love to get your feedback about the Microsoft Graph Webhooks sample for ASP.NET Core. You can send your questions and suggestions to us in the [Issues](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/issues) section of this repository.
 
 Questions about Microsoft Graph in general should be posted to [Stack Overflow](https://stackoverflow.com/questions/tagged/MicrosoftGraph). Make sure that your questions or comments are tagged with *[MicrosoftGraph]*.
 
-You can suggest changes for Microsoft Graph on [UserVoice](https://officespdev.uservoice.com/).
+You can suggest changes for Microsoft Graph on [UserVoice](https://microsoftgraph.uservoice.com/).
 
 ## Additional resources
 

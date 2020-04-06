@@ -1,11 +1,15 @@
 ---
 page_type: sample
-description: "This sample ASP.NET Core web application shows how to subscribe for webhooks using delegated permissions."
+description: "This sample ASP.NET Core web application shows how to subscribe to change notifications using webhooks. This sample also supports receiving change notifications with data, validating and decrypting the payload."
 products:
 - office-outlook
 - office-365
 - ms-graph
+- office-teams
+- office-sp
+- m365
 languages:
+- aspx-csharp
 - csharp
 extensions:
   contentType: samples
@@ -18,6 +22,8 @@ extensions:
   - Microsoft identity platform
   createdDate: 3/3/2017 8:55:02 AM
 ---
+![.NET Core](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/workflows/.NET%20Core/badge.svg?branch=master)
+
 # Microsoft Graph Webhooks Sample for ASP.NET Core
 
 Subscribe for [Microsoft Graph webhooks](https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.

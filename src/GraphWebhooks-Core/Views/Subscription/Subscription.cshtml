@@ -64,6 +64,13 @@
             <button type="submit">Delete subscription</button>
         }
     </div>
+    <div>
+        @using (Html.BeginForm($"Renew{(isAuthenticated ? string.Empty : "AppOnly")}", "Subscription"))
+        {
+            @Html.Hidden("id", Model.Id)
+            <button type="submit">Renew subscription</button>
+        }
+    </div>
     <br />
     <br />
     <div>

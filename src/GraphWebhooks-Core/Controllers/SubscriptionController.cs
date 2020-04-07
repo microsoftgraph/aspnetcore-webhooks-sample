@@ -48,7 +48,7 @@ namespace GraphWebhooks_Core.Controllers
             string clientState = Guid.NewGuid().ToString();
 
             // Initialize the GraphServiceClient
-            var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async() =>
+            var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
             {
                 string result = await tokenAcquisition.GetAccessTokenForUserAsync(new[] { subscriptionOptions.Value.Scope });
                 return result;
@@ -76,7 +76,7 @@ namespace GraphWebhooks_Core.Controllers
             string clientState = Guid.NewGuid().ToString();
 
             // Initialize the GraphServiceClient
-            var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async() =>
+            var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
             {
                 return await tokenAcquisition.GetAccessTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
             });
@@ -132,12 +132,11 @@ namespace GraphWebhooks_Core.Controllers
         [AuthorizeForScopes(ScopeKeySection = "SubscriptionSettings:Scope")]
         public async Task<IActionResult> Delete(string id)
         {
-            string userId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
             if (!string.IsNullOrEmpty(id))
             {
 
                 // Initialize the GraphServiceClient and delete the subscription.
-                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async() =>
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
                 {
                     return await tokenAcquisition.GetAccessTokenForUserAsync(new[] { subscriptionOptions.Value.Scope });
                 });
@@ -164,7 +163,7 @@ namespace GraphWebhooks_Core.Controllers
             {
 
                 // Initialize the GraphServiceClient and delete the subscription.
-                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async() =>
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
                 {
                     return await tokenAcquisition.GetAccessTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
                 });
@@ -182,6 +181,78 @@ namespace GraphWebhooks_Core.Controllers
                 ViewBag.Message = $"Deleted subscription {id}";
             }
             return View("Subscription");
+        }
+
+        // Renew a subscription with delegated context
+        [HttpPost]
+        [Authorize]
+        [AuthorizeForScopes(ScopeKeySection = "SubscriptionSettings:Scope")]
+        public async Task<IActionResult> Renew(string id)
+        {
+            if (!string.IsNullOrEmpty(id))
+            {
+
+                // Initialize the GraphServiceClient and renew the subscription.
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
+                {
+                    return await tokenAcquisition.GetAccessTokenForUserAsync(new[] { subscriptionOptions.Value.Scope });
+                });
+
+
+                try
+                {
+                    var subscription = await graphClient.Subscriptions[id].Request().UpdateAsync(new Subscription
+                    {
+                        ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 15, 0)
+                    });
+                    ViewBag.Message = $"Renewed subscription {id}";
+                    return View("Subscription", subscription);
+                }
+                catch (Exception e)
+                {
+                    ViewBag.Message = BuildErrorMessage(e);
+                    return View("Error");
+                }
+            }
+            else
+            {
+                return View("Error", "Subscription id is required");
+            }
+        }
+
+        // Renew a subscription with app only context
+        [HttpPost]
+        public async Task<IActionResult> RenewAppOnly(string id)
+        {
+            if (!string.IsNullOrEmpty(id))
+            {
+
+                // Initialize the GraphServiceClient and renew the subscription.
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
+                {
+                    return await tokenAcquisition.GetAccessTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
+                });
+
+
+                try
+                {
+                    var subscription = await graphClient.Subscriptions[id].Request().UpdateAsync(new Subscription
+                    {
+                        ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 15, 0)
+                    });
+                    ViewBag.Message = $"Renewed subscription {id}";
+                    return View("Subscription", subscription);
+                }
+                catch (Exception e)
+                {
+                    ViewBag.Message = BuildErrorMessage(e);
+                    return View("Error");
+                }
+            }
+            else
+            {
+                return View("Error", "Subscription id is required");
+            }
         }
 
         private string BuildErrorMessage(Exception e)

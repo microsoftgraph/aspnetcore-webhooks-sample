@@ -34,7 +34,7 @@ This sample uses:
 
 - [Microsoft Authentication Library for .NET](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) (MSAL.NET) to obtain an access token
 - The [Microsoft Graph Client Library for .NET](https://github.com/microsoftgraph/msgraph-sdk-dotnet) (SDK) to call Microsoft Graph.
-- The [Microsoft.Identity.Web](https://github.com/AzureAD/microsoft-identity-web) library to abstract some of the complexities.
+- The [Microsoft.Identity.Web](https://github.com/AzureAD/microsoft-identity-web) library to abstract some of the token acquisition complexities.
 
 This sample supports user-delegated authentication and uses:
 
@@ -45,13 +45,11 @@ This sample supports app-only authentication and uses:
 
 - The [client grant flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow) to obtain an access token.
 
->See the list of [permissions](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
-
-The sample app redirects to the Azure AD *adminconsent* endpoint so a tenant administrator can grant delegated permissions directly to the app. After the admin consents, users in the tenant can create a subscription and watch for notifications.
+>See the list of [permissions and authentication types](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
 
 The following are common tasks that an application performs with webhooks subscriptions:
 
-- Get consent to subscribe to users' resources and then get an access token.
+- Get consent to subscribe to resources and then get an access token.
 - Use the access token to [create a subscription](https://docs.microsoft.com/graph/api/subscription-post-subscriptions) to a resource.
 - Send back a validation token to confirm the notification URL.
 - Listen for notifications from Microsoft Graph and respond with a 202 status code.
@@ -98,11 +96,13 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 
 1. Navigate to the [Azure portal > App registrations](https://go.microsoft.com/fwlink/?linkid=2083908) to register your app.
 1. Select **New registration**.
+
    ![AadAppCreate3](docs/ad3.png)
 1. When the **Register an application page** appears, enter your app's registration information:
    1. In the **Name** section, enter a meaningful name that will be displayed to users of the app. For example: `MyWebApp`
    1. In the **Supported account types** section, select **Accounts in any organizational directory (Any Azure AD directory) and personal Microsoft accounts (e.g. Skype, Xbox)**.
       > You can leave the redirect URI empty, you'll add these from the **Authentication** tab later after the app has been successfully created.
+
       ![AadAppCreate4](docs/ad4.png)
 1. Select **Register** to create the app.
 1. On the app's **Overview** page, find the **Application (client) ID** value and record it for later. You'll need this value to configure the Visual Studio configuration file for this project.
@@ -126,11 +126,11 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
    1. Click the **Add a permission** button and then make sure that the **Microsoft APIs** tab is selected.
    1. In the **Commonly used Microsoft APIs** section, select **Microsoft Graph**.
    1. In the **Application permissions** section, make sure that the **Mail.Read** permission is checked. Use the search box if necessary.
-      > Also, in the **Delegated permissions** section, check the User.Read delegated permission for Azure Active Directory, so users can sign into the app to initiate the subscription process.
-      > *Note: for other resources you need to select different permissions as documented [here](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-beta&tabs=http#permissions)*
+      > Also, in the **Delegated permissions** section, check the User.Read delegated permission for Azure Active Directory, so users can sign into the app to initiate the subscription process.  
+      > *Note: for other resources you need to select different permissions as documented [here](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-beta&tabs=http#permissions)*  
       > *Note: depending on which authentication context you chose (app-only or user delegated) you need to select the corresponding permission **from the correct permission type**.*
    1. Select the **Add permissions** button.
-   1. Select **Grant admin consent for <name of your organization>** and **Yes**. This grants consent to the permissions of the application registration you just created to the current organization.
+   1. Select **Grant admin consent for `name of your organization>`** and **Yes**. This grants consent to the permissions of the application registration you just created to the current organization.
 
 ### Setting up Azure Key Vault
 

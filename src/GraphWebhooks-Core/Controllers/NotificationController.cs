@@ -162,7 +162,7 @@ namespace GraphWebhooks_Core.Controllers
                 var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
                 {
                     if (string.IsNullOrEmpty(subscription.UserId))
-                        return await tokenAcquisition.AcquireTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
+                        return await tokenAcquisition.GetAccessTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
                     else
                         return await tokenAcquisition.GetAccessTokenForUserAsync(new[] { subscriptionOptions.Value.Scope });
                 });

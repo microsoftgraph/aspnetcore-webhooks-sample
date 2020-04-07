@@ -78,7 +78,7 @@ namespace GraphWebhooks_Core.Controllers
             // Initialize the GraphServiceClient
             var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async() =>
             {
-                return await tokenAcquisition.AcquireTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
+                return await tokenAcquisition.GetAccessTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
             });
 
             try
@@ -166,7 +166,7 @@ namespace GraphWebhooks_Core.Controllers
                 // Initialize the GraphServiceClient and delete the subscription.
                 var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async() =>
                 {
-                    return await tokenAcquisition.AcquireTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
+                    return await tokenAcquisition.GetAccessTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
                 });
 
 

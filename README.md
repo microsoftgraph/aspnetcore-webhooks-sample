@@ -303,7 +303,7 @@ You can suggest changes for Microsoft Graph on [UserVoice](https://microsoftgrap
 
 ## Additional resources
 
-- [Microsoft Graph Webhooks sample for ASP.NET 4.6](https://github.com/microsoftgraph/aspnet-webhooks-rest-sample) (Delegated permissions)
+- [Microsoft Graph Webhooks sample for ASP.NET 4.6](https://github.com/microsoftgraph/aspnet-webhooks-rest-sample)
 - [Microsoft Graph Webhooks sample for Node.js](https://github.com/microsoftgraph/nodejs-webhooks-rest-sample) (Delegated permissions)
 - [Working with Webhooks in Microsoft Graph](https://docs.microsoft.com/graph/api/resources/webhooks)
 - [Subscription resource](https://docs.microsoft.com/graph/api/resources/subscription)

@@ -28,7 +28,7 @@ extensions:
 
 Subscribe for [Microsoft Graph webhooks](https://docs.microsoft.com/graph/api/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
 
-This sample ASP.NET Core web application shows how to subscribe for change notifications.
+This sample ASP.NET Core web application shows how to subscribe for change notifications as well as how to validate and decrypt change notifications with resource data (preview) when supported by the resource.
 
 This sample uses:
 
@@ -55,13 +55,13 @@ The following are common tasks that an application performs with webhooks subscr
 - Use the access token to [create a subscription](https://docs.microsoft.com/graph/api/subscription-post-subscriptions) to a resource.
 - Send back a validation token to confirm the notification URL.
 - Listen for notifications from Microsoft Graph and respond with a 202 status code.
-- Request more information about changed resources using data in the notification.
+- Request more information about changed resources using data in the notification or decrypts the resource data provided with the notification if any has been provided.
 
 ## Using the Microsoft Graph Webhooks Sample
 
 The screenshot below shows the app's start page.
   
-![Microsoft Graph Webhook Sample for ASP.NET Core screenshot](readme-images/Page1.PNG)
+![Microsoft Graph Webhook Sample for ASP.NET Core screenshot](docs/Page1.PNG)
 
 After the app creates a subscription for the signed-in user, Microsoft Graph sends a notification to the registered endpoint when events happen in the user's subscribed resource. The app then reacts to the event.
 
@@ -132,7 +132,7 @@ You can use the ngrok web interface (http://127.0.0.1:4040) to inspect the HTTP 
 
 1. On the **Debug** tab, copy the port number of the **App URL**.
 
-   ![The URL port number in the Properties window](readme-images/PortNumber.png)
+   ![The URL port number in the Properties window](docs/PortNumber.png)
 
 1. [Download ngrok](https://ngrok.com/download) for Windows.  
 
@@ -142,11 +142,11 @@ You can use the ngrok web interface (http://127.0.0.1:4040) to inspect the HTTP 
 
    `ngrok http {port-number} -host-header=localhost:{port-number}`
 
-   ![Example command to run in the ngrok console](readme-images/ngrok1.PNG)
+   ![Example command to run in the ngrok console](docs/ngrok1.PNG)
 
 1. Copy the HTTPS URL that's shown in the console. You'll use this to configure your notification URL in the sample.
 
-   ![The forwarding HTTPS URL in the ngrok console](readme-images/ngrok2.PNG)
+   ![The forwarding HTTPS URL in the ngrok console](docs/ngrok2.PNG)
 
 Keep the console open while testing. If you close it, the tunnel also closes and you'll need to generate a new URL and update the sample.
 
@@ -201,7 +201,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
    >This sample sets the subscription expiration to 15 minutes for testing purposes.
 
-   ![App page showing properties of the new subscription](readme-images/Page2.PNG)
+   ![App page showing properties of the new subscription](docs/Page2.PNG)
 
 1. Choose the **Watch for notifications** button.
 

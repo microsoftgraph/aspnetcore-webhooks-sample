@@ -4,9 +4,7 @@
 */
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Configuration;
 using GraphWebhooks_Core.Infrastructure;
 using Microsoft.Identity.Web;
 
@@ -14,18 +12,16 @@ namespace GraphWebhooks_Core.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly MicrosoftIdentityOptions azureAdOptions;
-        private readonly AppSettings appSettings;
+        private readonly IOptions<MicrosoftIdentityOptions> azureAdOptions;
+        private readonly IOptions<AppSettings> appSettings;
 
-        public AccountController(IOptions<AppSettings> appSettingsAccessor,
-                                IConfiguration configuration)
+        public AccountController(IOptions<AppSettings> appSettings,
+                                IOptions<MicrosoftIdentityOptions> azureAdOptions)
         {
-            appSettings = appSettingsAccessor.Value;
-            azureAdOptions = new MicrosoftIdentityOptions();
-            configuration.Bind("AzureAd", azureAdOptions);            
+            this.appSettings = appSettings;
+            this.azureAdOptions = azureAdOptions;
         }               
 
-        [Authorize]
         // Callback action for the `adminconsent` endpoint.
         public ActionResult GrantPermissions(string admin_consent, string tenant, string error, string error_description)
         {
@@ -36,21 +32,19 @@ namespace GraphWebhooks_Core.Controllers
                 return View("Error");
             }
             // If the admin successfully granted permissions, continue to the Home page.
-            else if (admin_consent == "True" && tenant == User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value)
+            else if (admin_consent == "True")
             {
                 return RedirectToAction(nameof(HomeController.Index), "Home");
             }
             return View();
         }
 
-        [Authorize]
         // Redirect to the `adminconsent` endpoint.
         public ActionResult RequestPermissions()
         {
-            string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
-            string redirectUri = System.Net.WebUtility.UrlEncode(appSettings.BaseRedirectUrl + "/Account/GrantPermissions");
+            string redirectUri = System.Net.WebUtility.UrlEncode(appSettings.Value.BaseRedirectUrl + "/Account/GrantPermissions");
             return new RedirectResult(
-                $"{ azureAdOptions.Instance}{ tenantId }/adminconsent?client_id={ azureAdOptions.ClientId }&redirect_uri={ redirectUri }"
+                $"{ azureAdOptions.Value.Instance}{ azureAdOptions.Value.TenantId }/adminconsent?client_id={ azureAdOptions.Value.ClientId }&redirect_uri={ redirectUri }"
             );
         }        
     }

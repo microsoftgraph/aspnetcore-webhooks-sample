@@ -3,6 +3,7 @@
  *  See LICENSE in the source repository root for complete license information.
  */
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Graph;
 using System;
 using System.Net.Http.Headers;
@@ -12,17 +13,17 @@ namespace GraphWebhooks_Core.Helpers
 {
     public static class GraphServiceClientFactory
     {
-        public static async Task<GraphServiceClient> GetAuthenticatedGraphClient(Func<Task<string>> acquireAccessToken)
+        public static async Task<GraphServiceClient> GetAuthenticatedGraphClient(string baseUrl, Func<Task<string>> acquireAccessToken)
         {
             // Fetch the access token
             string accessToken = await acquireAccessToken.Invoke();
 
-            return new GraphServiceClient(new DelegateAuthenticationProvider(
+            return new GraphServiceClient($"{baseUrl}/beta", new DelegateAuthenticationProvider(
                     (requestMessage) =>
                     {
                         // Append the access token to the request.
                         requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
-                            Infrastructure.Constants.BearerAuthorizationScheme, accessToken);
+                            JwtBearerDefaults.AuthenticationScheme, accessToken);
                         return Task.CompletedTask;
                     }));
         }

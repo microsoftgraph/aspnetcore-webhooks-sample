@@ -6,11 +6,9 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Graph;
 using GraphWebhooks_Core.Helpers;
 using GraphWebhooks_Core.Models;
@@ -19,80 +17,114 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Web;
 using GraphWebhooks_Core.Helpers.Interfaces;
+using System.Linq;
+using Microsoft.Extensions.Options;
+using System.IO;
+using GraphWebhooks_Core.Infrastructure;
 
 namespace GraphWebhooks_Core.Controllers
 {
-    
+
     public class NotificationController : Controller
     {
         private readonly ISubscriptionStore subscriptionStore;
         private readonly IHubContext<NotificationHub> notificationHub;
         private readonly ILogger logger;
         readonly ITokenAcquisition tokenAcquisition;
+        private readonly IOptions<MicrosoftIdentityOptions> identityOptions;
+        private readonly KeyVaultManager keyVaultManager;
+        private readonly IOptions<AppSettings> appSettings;
+        private readonly IOptions<SubscriptionOptions> subscriptionOptions;
+        private readonly NotificationService notificationService = new NotificationService();
 
         public NotificationController(ISubscriptionStore subscriptionStore,
                                       IHubContext<NotificationHub> notificationHub,
                                       ILogger<NotificationController> logger,
-                                      ITokenAcquisition tokenAcquisition)
+                                      ITokenAcquisition tokenAcquisition,
+                                      IOptions<MicrosoftIdentityOptions> identityOptions,
+                                      KeyVaultManager keyVaultManager,
+                                      IOptions<AppSettings> appSettings,
+                                      IOptions<SubscriptionOptions> subscriptionOptions)
         {
             this.subscriptionStore = subscriptionStore;
             this.notificationHub = notificationHub;
             this.logger = logger;
             this.tokenAcquisition = tokenAcquisition;
+            this.identityOptions = identityOptions ?? throw new ArgumentNullException(nameof(identityOptions));
+            this.keyVaultManager = keyVaultManager ?? throw new ArgumentNullException(nameof(keyVaultManager));
+            this.appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
+            this.subscriptionOptions = subscriptionOptions ?? throw new ArgumentNullException(nameof(subscriptionOptions));
         }
 
-		[Authorize]
-		public ActionResult LoadView(string id)
+        [Authorize]
+        public ActionResult LoadView(string id)
+        {
+            ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
+            return View("Notification");
+        }
+        public ActionResult LoadViewAppOnly(string id)
         {
             ViewBag.CurrentSubscriptionId = id; // Passing this along so we can delete it later.
             return View("Notification");
         }
 
         // The notificationUrl endpoint that's registered with the webhook subscription.
-        [HttpPost]       
-        public async Task<ActionResult> Listen()
+        [HttpPost]
+        public async Task<IActionResult> Listen([FromQuery]string validationToken = null)
         {
-
-            // Validate the new subscription by sending the token back to Microsoft Graph.
-            // This response is required for each subscription.
-            var query = QueryHelpers.ParseQuery(Request.QueryString.ToString());
-            if (query.ContainsKey("validationToken"))
-            {
-                return Content(query["validationToken"], "plain/text");
-            }
-
-            // Parse the received notifications.
-            else
+            if (string.IsNullOrEmpty(validationToken))
             {
                 try
                 {
-                    Dictionary<string, Notification> notifications = new Dictionary<string, Notification>();
-                    using (var inputStream = new System.IO.StreamReader(Request.Body))
+                    // Parse the received notifications.
+                    var plainNotifications = new Dictionary<string, ChangeNotification>();
+                    using var inputStream = new StreamReader(Request.Body);
+                    var collection = JsonConvert.DeserializeObject<NotificationCollection>(await inputStream.ReadToEndAsync());
+                    foreach (var notification in collection.Value.Where(x => x.EncryptedContent == null))
                     {
-                        JObject jsonObject = JObject.Parse(await inputStream.ReadToEndAsync());
-                        if (jsonObject != null)
+                        SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
+
+                        // Verify the current client state matches the one that was sent.
+                        if (notification.ClientState == subscription.ClientState)
                         {
-                            // Notifications are sent in a 'value' array. The array might contain multiple notifications for events that are
-                            // registered for the same notification endpoint, and that occur within a short timespan.
-                            JArray value = JArray.Parse(jsonObject["value"].ToString());
-                            foreach (var notification in value)
-                            {
-                                Notification current = JsonConvert.DeserializeObject<Notification>(notification.ToString());
-                                SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(current.SubscriptionId);
+                            // Just keep the latest notification for each resource. No point pulling data more than once.
+                            plainNotifications[notification.Resource] = notification;
+                        }
+                    }
 
-                                // Verify the current client state matches the one that was sent.
-                                if (current.ClientState == subscription.ClientState)
-                                {
-                                    // Just keep the latest notification for each resource. No point pulling data more than once.
-                                    notifications[current.Resource] = current;
-                                }
+                    if (plainNotifications.Count > 0)
+                    {
+                        // Query for the changed messages. 
+                        await GetChangedMessagesAsync(plainNotifications.Values);
+                    }
+
+                    if (collection.ValidationTokens != null && collection.ValidationTokens.Any())
+                    { // we're getting notifications with resource data and we should validate tokens and decrypt data
+                        TokenValidator tokenValidator = new TokenValidator(identityOptions.Value.TenantId, new[] { identityOptions.Value.ClientId });
+                        bool areValidationTokensValid = (await Task.WhenAll(
+                            collection.ValidationTokens.Select(x => tokenValidator.ValidateToken(x))).ConfigureAwait(false))
+                            .Aggregate((x, y) => x && y);
+                        if (areValidationTokensValid)
+                        {
+                            List<NotificationViewModel> notificationsToDisplay = new List<NotificationViewModel>();
+                            foreach (var notificationItem in collection.Value.Where(x => x.EncryptedContent != null))
+                            {
+                                string decryptedpublisherNotification =
+                                Decryptor.Decrypt(
+                                    notificationItem.EncryptedContent.Data,
+                                    notificationItem.EncryptedContent.DataKey,
+                                    notificationItem.EncryptedContent.DataSignature,
+                                    await keyVaultManager.GetDecryptionCertificate().ConfigureAwait(false));
+
+                                notificationsToDisplay.Add(new NotificationViewModel(decryptedpublisherNotification));
                             }
 
-                            if (notifications.Count > 0)
-                            {
-                                // Query for the changed messages. 
-                                await GetChangedMessagesAsync(notifications.Values);
-                            }
+                            await notificationService.SendNotificationToClient(notificationHub, notificationsToDisplay);
+                            return Accepted();
+                        }
+                        else
+                        {
+                            return Unauthorized("Token Validation failed");
                         }
                     }
                 }
@@ -100,54 +132,73 @@ namespace GraphWebhooks_Core.Controllers
                 {
                     logger.LogError($"ParsingNotification: { ex.Message }");
 
-                    // TODO: Handle the exception. 
                     // Still return a 202 so the service doesn't resend the notification.
                 }
-                return new StatusCodeResult(202);
+                return Accepted();
+            }
+            else
+            {
+                // Validate the new subscription by sending the token back to Microsoft Graph.
+                // This response is required for each subscription.
+                return Content(validationToken);
             }
         }
 
         // Get information about the changed messages and send to browser via SignalR.
         // A production application would typically queue a background job for reliability.
-        private async Task GetChangedMessagesAsync(IEnumerable<Notification> notifications)
+        private async Task GetChangedMessagesAsync(IEnumerable<ChangeNotification> notifications)
         {
-            List<MessageViewModel> messages = new List<MessageViewModel>();
+            List<NotificationViewModel> notificationsToDisplay = new List<NotificationViewModel>();
             foreach (var notification in notifications)
             {
-                if (notification.ResourceData.ODataType != "#Microsoft.Graph.Message") continue;
-
                 SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
-                                
+
                 // Set the claims for ObjectIdentifier and TenantId, and              
                 // use the above claims for the current HttpContext
-                HttpContext.User = ClaimsPrincipalFactory.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
+                if (!string.IsNullOrEmpty(subscription.UserId))
+                    HttpContext.User = ClaimsPrincipalFactory.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
 
-                // Initialize the GraphServiceClient. 
-                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(async () =>
+                // Initialize the GraphServiceClient.
+                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
                 {
-                    string result = await tokenAcquisition.GetAccessTokenForUserAsync(new[] { Infrastructure.Constants.ScopeMailRead });
-                    return result;
+                    if (string.IsNullOrEmpty(subscription.UserId))
+                        return await tokenAcquisition.GetAccessTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
+                    else
+                        return await tokenAcquisition.GetAccessTokenForUserAsync(new[] { subscriptionOptions.Value.Scope });
                 });
 
-                MessageRequest request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
-                try
+                if (notification.ResourceData.ODataType == "#Microsoft.Graph.Message")
                 {
-                    messages.Add(new MessageViewModel(await request.GetAsync(), subscription.UserId));
-                }
-                catch (ServiceException se)
-                {
-                    string errorMessage = se.Error.Message;
-                    string requestId = se.Error.InnerError.AdditionalData["request-id"].ToString();
-                    string requestDate = se.Error.InnerError.AdditionalData["date"].ToString();
+                    var request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
+                    try
+                    {
+                        var responseValue = await request.GetAsync();
+                        notificationsToDisplay.Add(new NotificationViewModel(new
+                        {
+                            From = responseValue?.From?.EmailAddress?.Address,
+                            responseValue?.Subject,
+                            SentDateTime = responseValue?.SentDateTime.HasValue ?? false ? responseValue?.SentDateTime.Value.ToString() : string.Empty,
+                            To = responseValue?.ToRecipients?.Select(x => x.EmailAddress.Address)?.ToList(),
+                        }));
+                    }
+                    catch (ServiceException se)
+                    {
+                        string errorMessage = se.Error.Message;
+                        string requestId = se.Error.InnerError.AdditionalData["request-id"].ToString();
+                        string requestDate = se.Error.InnerError.AdditionalData["date"].ToString();
 
-                    logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
+                        logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
+                    }
+                }
+                else
+                {
+                    notificationsToDisplay.Add(new NotificationViewModel(notification.Resource));
                 }
             }
 
-            if (messages.Count > 0)
+            if (notificationsToDisplay.Count > 0)
             {
-                NotificationService notificationService = new NotificationService();
-                                    await notificationService.SendNotificationToClient(this.notificationHub, messages);                
+                await notificationService.SendNotificationToClient(notificationHub, notificationsToDisplay);
             }
         }
     }

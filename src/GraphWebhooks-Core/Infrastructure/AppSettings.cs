@@ -7,8 +7,7 @@ namespace GraphWebhooks_Core.Infrastructure
 {
     public class AppSettings
     {
-        public string GraphApiUrl { get; set; }        
-        public string NotificationUrl { get; set; }
-        public string BaseRedirectUrl { get; set; }        
+        public string BaseRedirectUrl { get; set; }
+        public string GraphApiUrl { get; set; }
     }
 }

@@ -4,13 +4,13 @@
 */
 
 using GraphWebhooks_Core.Infrastructure;
+using GraphWebhooks_Core.Models;
 using GraphWebhooks_Core.SignalR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Identity.Web.UI;
 
 namespace GraphWebhooks_Core
 {
@@ -33,6 +33,9 @@ namespace GraphWebhooks_Core
             services.InitializeAuthentication(Configuration);
             services.AddControllersWithViews();
 
+            services.Configure<KeyVaultOptions>(Configuration.GetSection("KeyVaultSettings"));
+            services.Configure<SubscriptionOptions>(Configuration.GetSection("SubscriptionSettings"));
+            services.AddSingleton<KeyVaultManager>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

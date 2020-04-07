@@ -5,6 +5,7 @@
 
 @{
     ViewBag.Title = "Subscription";
+    bool isAuthenticated = User.Identity.IsAuthenticated;
 }
 
 <h2>Subscription</h2>
@@ -57,18 +58,25 @@
     </div>
     <br />
     <div>
-        @using (Html.BeginForm("Delete", "Subscription"))
+        @using (Html.BeginForm($"Delete{(isAuthenticated ? string.Empty : "AppOnly")}", "Subscription"))
         {
             @Html.Hidden("id", Model.Id)
             <button type="submit">Delete subscription</button>
+        }
+    </div>
+    <div>
+        @using (Html.BeginForm($"Renew{(isAuthenticated ? string.Empty : "AppOnly")}", "Subscription"))
+        {
+            @Html.Hidden("id", Model.Id)
+            <button type="submit">Renew subscription</button>
         }
     </div>
     <br />
     <br />
     <div>
         <h4>Watch for notifications</h4>
-        <p>Choose <b>Watch for notifications</b> and then send an email to your user. The <b>Notifications</b> page will display metadata for new messages.</p>
-        @using (Html.BeginForm("LoadView", "Notification"))
+        <p>Choose <b>Watch for notifications</b> and then generate events (eg send emails to the user, create teams messages...). The <b>Notifications</b> page will display metadata.</p>
+        @using (Html.BeginForm($"LoadView{(isAuthenticated ? string.Empty : "AppOnly")}", "Notification"))
         {
             @Html.Hidden("id", Model.Id)
             <button type="submit">Watch for notifications</button>

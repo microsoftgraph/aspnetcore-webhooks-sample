@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +20,8 @@ using System.Linq;
 using Microsoft.Extensions.Options;
 using System.IO;
 using GraphWebhooks_Core.Infrastructure;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace GraphWebhooks_Core.Controllers
 {
@@ -78,11 +79,15 @@ namespace GraphWebhooks_Core.Controllers
                 {
                     // Parse the received notifications.
                     var plainNotifications = new Dictionary<string, ChangeNotification>();
-                    using var inputStream = new StreamReader(Request.Body);
-                    var collection = JsonConvert.DeserializeObject<NotificationCollection>(await inputStream.ReadToEndAsync());
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+                    options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+                    var collection = await JsonSerializer.DeserializeAsync<ChangeNotificationCollection>(Request.Body, options);
                     foreach (var notification in collection.Value.Where(x => x.EncryptedContent == null))
                     {
-                        SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
+                        SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId.Value);
 
                         // Verify the current client state matches the one that was sent.
                         if (notification.ClientState == subscription.ClientState)
@@ -151,7 +156,7 @@ namespace GraphWebhooks_Core.Controllers
             List<NotificationViewModel> notificationsToDisplay = new List<NotificationViewModel>();
             foreach (var notification in notifications)
             {
-                SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId);
+                SubscriptionStore subscription = subscriptionStore.GetSubscriptionInfo(notification.SubscriptionId.Value);
 
                 // Set the claims for ObjectIdentifier and TenantId, and              
                 // use the above claims for the current HttpContext

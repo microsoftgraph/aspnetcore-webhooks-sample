@@ -3,12 +3,14 @@
  *  See LICENSE in the source repository root for complete license information.
  */
 
+using System;
+
 namespace GraphWebhooks_Core.Helpers.Interfaces
 {
     public interface ISubscriptionStore
     {
-        void SaveSubscriptionInfo(string subscriptionId, string clientState, string userId, string tenantId);
+        void SaveSubscriptionInfo(Guid subscriptionId, string clientState, string userId, string tenantId);
 
-        SubscriptionStore GetSubscriptionInfo(string subscriptionId);
+        SubscriptionStore GetSubscriptionInfo(Guid subscriptionId);
     }
 }

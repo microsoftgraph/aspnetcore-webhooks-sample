@@ -13,7 +13,7 @@ namespace GraphWebhooks_Core.Helpers
     {
         private readonly IMemoryCache memoryCache;
 
-        public string SubscriptionId { get; set; }
+        public Guid SubscriptionId { get; set; }
         public string ClientState { get; set; }
         public string UserId { get; set; }
         public string TenantId { get; set; }
@@ -24,7 +24,7 @@ namespace GraphWebhooks_Core.Helpers
             this.memoryCache = memoryCache;
         }
 
-        private SubscriptionStore(string subscriptionId, Tuple<string, string, string> parameters)
+        private SubscriptionStore(Guid subscriptionId, Tuple<string, string, string> parameters)
         {
             SubscriptionId = subscriptionId;
             ClientState = parameters.Item1;
@@ -36,14 +36,14 @@ namespace GraphWebhooks_Core.Helpers
         // This info is required so the NotificationController can validate the subscription, retrieve an access token from the cache, and filter 
         // the messages this sample displays to the user.
         // Production apps typically use some method of persistent storage.
-        public void SaveSubscriptionInfo(string subscriptionId, string clientState, string userId, string tenantId)
+        public void SaveSubscriptionInfo(Guid subscriptionId, string clientState, string userId, string tenantId)
         {
             memoryCache.Set("subscriptionId_" + subscriptionId,
                 Tuple.Create(clientState, userId, tenantId),
                 new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(24)));
         }
 
-        public SubscriptionStore GetSubscriptionInfo(string subscriptionId)
+        public SubscriptionStore GetSubscriptionInfo(Guid subscriptionId)
         {
             Tuple<string, string, string> subscriptionParams = memoryCache.Get("subscriptionId_" + subscriptionId) as Tuple<string, string, string>;
             return new SubscriptionStore(subscriptionId, subscriptionParams);

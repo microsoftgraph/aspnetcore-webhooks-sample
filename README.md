@@ -45,6 +45,8 @@ This sample supports app-only authentication and uses:
 
 - The [client grant flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow) to obtain an access token.
 
+[User-delegated authentication](https://docs.microsoft.com/graph/auth-v2-user) represents a user and the application being used when calling the Microsoft Graph. This type of authentication is best suited for scenarios when the user interacts with the application. [Application only authentication](https://docs.microsoft.com/graph/auth-v2-service) represents only the application itself when calling the Microsoft Graph, without any notion of user. This type of authentication is best suited for background services, daemons or other kind of applications users are not directly interacting with.
+
 >See the list of [permissions and authentication types](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
 
 The following are common tasks that an application performs with webhooks subscriptions:
@@ -107,7 +109,7 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
       ![AadAppCreate4](docs/ad4.png)
 1. Select **Register** to create the app.
 1. On the app's **Overview** page, find the **Application (client) ID** value and record it for later. You'll need this value to configure the Visual Studio configuration file for this project.
-1. In the list of pages for the app, select **Authentication**. (this step is only required if you are using a user-delegated authentication context):
+1. In the list of pages for the app, select **Authentication**. (this step is only required if you are using a user-delegated authentication):
    1. In the **Redirect URIs** section, select **Web** in the combo-box and enter the following redirect URIs:
       - `https://localhost:44334/signin-oidc`
       - `https://localhost:44334/Account/GrantPermissions`
@@ -129,7 +131,7 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
    1. In the **Application permissions** section, make sure that the **Mail.Read** permission is checked. Use the search box if necessary.
       > Also, in the **Delegated permissions** section, check the User.Read delegated permission for Azure Active Directory, so users can sign into the app to initiate the subscription process.  
       > *Note: for other resources you need to select different permissions as documented [here](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-beta&tabs=http#permissions)*  
-      > *Note: depending on which authentication context you chose (app-only or user delegated) you need to select the corresponding permission **from the correct permission type**.*
+      > *Note: depending on which authentication type you chose (app-only or user delegated) you need to select the corresponding permission **from the correct permission type**.*
    1. Select the **Add permissions** button.
    1. Select **Grant admin consent for `name of your organization>`** and **Yes**. This grants consent to the permissions of the application registration you just created to the current organization.
 
@@ -223,7 +225,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 #### Sign-in and grant permissions
 
-> Note: you need to go through the following steps only if you are trying to create a subscription with **user-delegated** context.
+> Note: you need to go through the following steps only if you are trying to create a subscription with **user-delegated** application.
 
 1. Choose **Sign in** in the upper-right corner and sign in with a work or school account.
 

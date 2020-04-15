@@ -68,13 +68,6 @@ After the app creates a subscription, Microsoft Graph sends a notification to th
 
 This sample app subscribes to any resource configured in `appsettings.json` in `SubscriptionSettings:Resource` (default is `me/messages`) for any change  configured in `SubscriptionSettings:ChangeType` (default `created,updated`). When receiving any notification, the app then updates a page with information about the resource.
 
-This project uses git submodules. After cloning the repository, make sure you execute the following commands:
-
-```shell
-git submodule init
-git submodule update
-```
-
 ### Prerequisites
 
 To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the following:

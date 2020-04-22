@@ -118,7 +118,7 @@ namespace GraphWebhooks_Core.Controllers
             // This sample temporarily stores the subscription data, but production apps will likely use some method of persistent storage.
             // This sample stores the client state to validate the subscription, the tenant ID to reuse tokens, and the user ID to filter
             // messages to display by user.
-            subscriptionStore.SaveSubscriptionInfo(newSubscription.Id,
+            subscriptionStore.SaveSubscriptionInfo(Guid.Parse(newSubscription.Id),
                 newSubscription.ClientState,
                 userId,
                 tenantId);

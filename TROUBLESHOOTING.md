@@ -30,3 +30,21 @@ Make sure the local path where you placed the solution is not too long/deep. Mov
 **The resource cannot be found.* browser page.**
 
 Make sure that a CSHTML view file isn't the active tab when you run the app from Visual Studio.
+
+## Hosting the sample without a tunnel
+
+Microsoft Graph (or any other webhook provider) needs a notification URL that it can reach to deliver notifications. The sample uses localhost as the development server.
+
+Localhost just means this host. If any webhook provider would deliver a notification to localhost, it would be delivering it to itself. Not very useful.
+
+Microsoft Graph can't deliver notifications to localhost. For this reason, we need a tunnel that can forward requests from a URL on the Internet to our localhost.
+
+There are some alternatives that you can consider to try this sample without a tunnel.
+
+### Host the sample on a cloud service
+
+You can host the sample using a cloud service such as Microsoft Azure. Cloud services allow you to expose the notification URL to the Internet. Microsoft Graph can deliver notifications to the URL in the cloud.
+
+Note that in some cases, you'll be able to deploy the sample to a website hosted in the cloud. In other cases, you'll need to set up a virtual machine and install a development environment with the prerequisites listed in the [ReadMe](./README.md#prerequisites).
+
+See your cloud provider's documentation for details about how to host a web application or virtual machine using the cloud service.

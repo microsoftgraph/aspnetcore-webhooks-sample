@@ -11,6 +11,7 @@ products:
 languages:
 - aspx-csharp
 - csharp
+title: aspnetcore-webhooks-sample
 extensions:
   contentType: samples
   technologies:

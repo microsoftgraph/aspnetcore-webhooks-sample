@@ -15,15 +15,15 @@ using System.Security.Cryptography;
 
 namespace GraphWebhooks_Core
 {
-	public class Program
-	{
+    public class Program
+    {
         const string privateKeyPath = "privkey.pem";
         const string certificatePath = "fullchain.pem";
 
         public static void Main(string[] args)
-		{
-			CreateWebHostBuilder(args).Build().Run();
-		}                
+        {
+            CreateWebHostBuilder(args).Build().Run();
+        }
 
         public static IHostBuilder CreateWebHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
@@ -34,12 +34,12 @@ namespace GraphWebhooks_Core
                     serverOptions.ConfigureEndpointDefaults(listenOptions =>
                     {
                         listenOptions.Protocols = HttpProtocols.Http2;
-                        if(File.Exists(privateKeyPath) && File.Exists(certificatePath))
-                        {
-                            var certificate = LoadPemCertificate(certificatePath, privateKeyPath).GetAwaiter().GetResult();
-                            listenOptions.UseHttps(certificate);
-                        }
                     });
+                    if (File.Exists(privateKeyPath) && File.Exists(certificatePath))
+                        serverOptions.ConfigureHttpsDefaults(options =>
+                        {
+                            options.ServerCertificate = LoadPemCertificate(certificatePath, privateKeyPath).GetAwaiter().GetResult();
+                        });
                     // Set properties and call methods on options
                 })
                 .UseStartup<Startup>();

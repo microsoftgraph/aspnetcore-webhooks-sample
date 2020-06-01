@@ -16,5 +16,13 @@
  WORKDIR /app
  COPY --from=builder /app .
  ENTRYPOINT ["dotnet", "GraphWebhooks-Core.dll"]
- EXPOSE 5000
- EXPOSE 5001
+ EXPOSE 5000 \
+        5001
+ ENV ASPNETCORE_URLS=http://*:5000;https://*:5001 \
+     AZUREAD__INSTANCE=https://login.microsoftonline.com/ \
+     AZUREAD__TENANTID=common \
+     AZUREAD__CALLBACKPATH=/signin-oidc \
+     AZUREAD__CLIENTID=clientid \
+     KEYVAULTSETTINGS__CLIENTID=clientid \
+     KEYVAULTSETTINGS__CLIENTSECRET=clientsecret \
+     KEYVAULTSETTINGS__CERTIFICATEURL=https://keyvaultname.vault.azure.net/secrets/certificateName

@@ -15,8 +15,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag microsoftgraph-aspnetcore-webhooks:$(date +%s) --tag ${{SECRETS.REGISTRY_NAME}}/microsoft-graph/microsoftgraph-aspnetcore-webhooks:latest
+      run: docker build . --file Dockerfile --tag ${{SECRETS.REGISTRY_NAME}}/microsoft-graph/microsoftgraph-aspnetcore-webhooks:$(date +%s) --tag ${{SECRETS.REGISTRY_NAME}}/microsoft-graph/microsoftgraph-aspnetcore-webhooks:latest
     - name: Login to the registry
       run: docker login ${{SECRETS.REGISTRY_NAME}} -u ${{SECRETS.REGISTRY_LOGIN}} -p ${{SECRETS.REGISTRY_PASSWORD}}
     - name: Push image
-      run: docker push ${{SECRETS.REGISTRY_NAME}}/microsoft-graph/microsoftgraph-aspnetcore-webhooks
+      run: docker push ${{SECRETS.REGISTRY_NAME}}/microsoft-graph/microsoftgraph-aspnetcore-webhooks:latest
+    - name: Push image
+      run: docker push ${{SECRETS.REGISTRY_NAME}}/microsoft-graph/microsoftgraph-aspnetcore-webhooks:$(date +%s)

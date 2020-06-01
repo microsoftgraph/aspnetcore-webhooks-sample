@@ -3,8 +3,10 @@
  *  See LICENSE in the source repository root for complete license information.
  */
 
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace GraphWebhooks_Core
 {
@@ -15,9 +17,20 @@ namespace GraphWebhooks_Core
 			CreateWebHostBuilder(args).Build().Run();
 		}                
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-            .UseStartup<Startup>();
+        public static IHostBuilder CreateWebHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.ConfigureKestrel(serverOptions =>
+                {
+                    serverOptions.ConfigureEndpointDefaults(listenOptions =>
+                    {
+                        listenOptions.Protocols = HttpProtocols.Http2;
+                    });
+                    // Set properties and call methods on options
+                })
+                .UseStartup<Startup>();
+            }).ConfigureAppConfiguration(configurationBuilder => { configurationBuilder.AddEnvironmentVariables(); });
 	}
 
 }

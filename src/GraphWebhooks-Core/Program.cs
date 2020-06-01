@@ -17,8 +17,9 @@ namespace GraphWebhooks_Core
 {
     public class Program
     {
-        static string privateKeyPath = Path.Combine(Directory.GetCurrentDirectory(), "privkey.pem");
-        static string certificatePath = Path.Combine(Directory.GetCurrentDirectory(), "fullchain.pem");
+        const string certificatesSubDir = "certificates";
+        static string privateKeyPath = Path.Combine(Directory.GetCurrentDirectory(), certificatesSubDir, "privkey.pem");
+        static string certificatePath = Path.Combine(Directory.GetCurrentDirectory(), certificatesSubDir, "fullchain.pem");
 
         public static void Main(string[] args)
         {

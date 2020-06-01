@@ -16,6 +16,7 @@
  WORKDIR /app
  COPY --from=builder /app .
  ENTRYPOINT ["dotnet", "GraphWebhooks-Core.dll"]
+ VOLUME [ "/app/certificates" ]
  EXPOSE 5000 \
         5001
  ENV ASPNETCORE_URLS=http://*:5000;https://*:5001 \

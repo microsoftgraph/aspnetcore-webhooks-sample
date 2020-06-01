@@ -20,5 +20,3 @@ jobs:
       run: docker login ${{SECRETS.REGISTRY_NAME}} -u ${{SECRETS.REGISTRY_LOGIN}} -p ${{SECRETS.REGISTRY_PASSWORD}}
     - name: Push image
       run: docker push ${{SECRETS.REGISTRY_NAME}}/microsoft-graph/microsoftgraph-aspnetcore-webhooks:latest
-    - name: Push image
-      run: docker push ${{SECRETS.REGISTRY_NAME}}/microsoft-graph/microsoftgraph-aspnetcore-webhooks:$(date +%s)

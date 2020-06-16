@@ -13,10 +13,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Checkout submodules
-      run: git submodule init
-    - name: Update submodules
-      run: git submodule update
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:

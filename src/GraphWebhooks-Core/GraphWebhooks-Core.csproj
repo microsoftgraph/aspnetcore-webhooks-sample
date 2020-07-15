@@ -36,7 +36,7 @@
     <PackageReference Include="Microsoft.Identity.Web" Version="0.1.5-preview" />
     <PackageReference Include="Microsoft.Identity.Web.UI" Version="0.1.5-preview" />
     <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="3.1.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="3.1.6" />
     <PackageReference Include="Microsoft.AspNetCore.Connections.Abstractions" Version="3.1.5" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.3" />

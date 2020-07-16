@@ -22,6 +22,7 @@ using System.IO;
 using GraphWebhooks_Core.Infrastructure;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Net;
 
 namespace GraphWebhooks_Core.Controllers
 {
@@ -145,7 +146,7 @@ namespace GraphWebhooks_Core.Controllers
             {
                 // Validate the new subscription by sending the token back to Microsoft Graph.
                 // This response is required for each subscription.
-                return Content(validationToken);
+                return Content(WebUtility.HtmlEncode(validationToken));
             }
         }
 

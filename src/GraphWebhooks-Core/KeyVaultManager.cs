@@ -66,7 +66,7 @@ namespace GraphWebhooks_Core
                      AuthenticationContext authenticationContext = new AuthenticationContext(authority, null);
                      return (await authenticationContext.AcquireTokenAsync(resource, adCredential)).AccessToken;
                  });
-                SecretBundle keyVaultCertificatePfx = await keyVaultClient.GetSecretAsync(certificateUrl).ConfigureAwait(false);
+                SecretBundle keyVaultCertificatePfx = await keyVaultClient.GetSecretAsync(certificateUrl.Replace("/certificates/", "/secrets/", StringComparison.OrdinalIgnoreCase)).ConfigureAwait(false);
                 CertificateBundle keyVaultCertificateCer = await keyVaultClient.GetCertificateAsync(certificateUrl.Replace("/secrets/", "/certificates/", StringComparison.OrdinalIgnoreCase)).ConfigureAwait(false);
 
                 DecryptionCertificate = keyVaultCertificatePfx.Value;

@@ -27,9 +27,9 @@ namespace GraphWebhooks_Core.Helpers
         private SubscriptionStore(Guid subscriptionId, Tuple<string, string, string> parameters)
         {
             SubscriptionId = subscriptionId;
-            ClientState = parameters.Item1;
-            UserId = parameters.Item2;
-            TenantId = parameters.Item3;
+            ClientState = parameters?.Item1;
+            UserId = parameters?.Item2;
+            TenantId = parameters?.Item3;
         }
 
         // This sample temporarily stores the current subscription ID, client state, user object ID, and tenant ID. 

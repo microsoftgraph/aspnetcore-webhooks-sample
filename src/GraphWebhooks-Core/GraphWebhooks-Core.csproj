@@ -32,9 +32,8 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="3.1.8" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" Version="3.1.8" />
-    <PackageReference Include="Microsoft.Graph.Beta" Version="0.19.0-preview" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="0.1.5-preview" />
-    <PackageReference Include="Microsoft.Identity.Web.UI" Version="0.1.5-preview" />
+    <PackageReference Include="Microsoft.Identity.Web.MicrosoftGraphBeta" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" Version="1.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="3.1.8" />
     <PackageReference Include="Microsoft.AspNetCore.Connections.Abstractions" Version="3.1.8" />

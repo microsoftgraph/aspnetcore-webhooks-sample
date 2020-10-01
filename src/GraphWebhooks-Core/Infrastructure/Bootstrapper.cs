@@ -26,7 +26,8 @@ namespace GraphWebhooks_Core.Infrastructure
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
             // Register the IConfiguration instance which AppOptions binds against.
-            services.Configure<AppSettings>(configuration);       
+            services.Configure<AppSettings>(configuration);
+            services.Configure<DownstreamApiSettings>(configuration.GetSection("DownstreamApi"));
             //https://docs.microsoft.com/en-us/dotnet/standard/microservices-architecture/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
         }
 
@@ -34,8 +35,9 @@ namespace GraphWebhooks_Core.Infrastructure
         {
             // Token acquisition service and its cache implementation
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-                .AddSignIn(configuration);
-            services.AddWebAppCallsProtectedWebApi(configuration, new string[] { configuration.GetValue<string>("SubscriptionSettings:Scope") })
+                .AddMicrosoftIdentityWebApp(configuration.GetSection("AzureAd"))
+                .EnableTokenAcquisitionToCallDownstreamApi( new string[] { configuration.GetValue<string>("SubscriptionSettings:Scope") })
+                .AddMicrosoftGraph(configuration.GetSection("DownstreamApi"))
                 .AddInMemoryTokenCaches();
 
             services.AddTransient<ISubscriptionStore, SubscriptionStore>();

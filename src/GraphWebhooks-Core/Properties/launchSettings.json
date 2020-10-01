@@ -10,7 +10,6 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchBrowser": true,
       "launchUrl": "https://localhost:44334/",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

@@ -59,7 +59,9 @@ namespace GraphWebhooks_Core
                 string clientId = KeyVaultOptions.Value.ClientId;
                 string clientSecret = KeyVaultOptions.Value.ClientSecret;
                 string certificateUrl = KeyVaultOptions.Value.CertificateUrl;
-                string keyVaultUri = KeyVaultOptions.Value.KeyVaultUri;
+                
+                string[] splitCertificateUrl = certificateUrl.Split("/");
+                string keyVaultUri = splitCertificateUrl[0] + "//" + splitCertificateUrl[2];
 
                 var keyVaultSecretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
                 var certificateClient = new CertificateClient(new Uri(keyVaultUri), new DefaultAzureCredential());

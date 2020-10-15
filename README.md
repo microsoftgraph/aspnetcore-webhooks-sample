@@ -202,8 +202,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
       ```JSON
       "KeyVaultSettings": {
          "ClientId": "ENTER_YOUR_APP_ID",
-         "ClientSecret": "ENTER_YOUR_SECRET",
-         "KeyVaultUri": "ENTER_YOUR_VAULT_URI"
+         "ClientSecret": "ENTER_YOUR_SECRET"
       }
       ```
 
@@ -213,7 +212,26 @@ Keep the console open while testing. If you close it, the tunnel also closes and
       - For the **ClientId** key, replace *ENTER_YOUR_APP_ID* with the application ID of your registered Azure application.  
       - For the **ClientSecret** key, replace *ENTER_YOUR_SECRET* with the key of your registered Azure application. Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password.
       - For the **Tenantd** key, replace *ENTER_YOUR_TENANT_ID* with your tenant ID, this information can be found on the application registration page.  
-      - For the "**KeyVaultUri**" key, replace *ENTER_YOUR_VAULT_URI* with the key of your vault uri, this can be found on KeyVault preview page.
+
+1. Set the environment variable for DefaultAzureCredential.
+
+   Follow one of the examples below depending on your operating system to create the environment variable. If using Windows close your open IDE or shell and restart it to be able to read the environment variable.
+
+   Linux
+
+   ```bash
+   export AZURE_CLIENT_ID="<ENTER_YOUR_APP_ID>"
+   export AZURE_CLIENT_SECRET="<ENTER_YOUR_SECRET>"
+   export AZURE_TENANT_ID="<ENTER_YOUR_TENANT_ID>"
+   ```
+
+   Windows
+
+   ```cmd
+   setx AZURE_CLIENT_ID "<ENTER_YOUR_APP_ID>"
+   setx AZURE_CLIENT_SECRET "<ENTER_YOUR_SECRET>"
+   setx AZURE_TENANT_ID "<ENTER_YOUR_TENANT_ID>"
+   ```
 
 1. Make sure that the ngrok console is still running, then press F5 to build and run the solution in debug mode.
 

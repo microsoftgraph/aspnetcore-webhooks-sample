@@ -9,5 +9,7 @@ namespace GraphWebhooks_Core.Models
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
         public string CertificateUrl { get; set; }
+        public string TenantId { get; set; }
+        public string CertificateLocation { get; set; }
     }
 }

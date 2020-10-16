@@ -59,12 +59,16 @@ namespace GraphWebhooks_Core
                 string clientId = KeyVaultOptions.Value.ClientId;
                 string clientSecret = KeyVaultOptions.Value.ClientSecret;
                 string certificateUrl = KeyVaultOptions.Value.CertificateUrl;
+                string tenantId = KeyVaultOptions.Value.TenantId;
+                string certificateLocation = KeyVaultOptions.Value.CertificateLocation;
                 
-                string[] splitCertificateUrl = certificateUrl.Split("/");
-                string keyVaultUri = splitCertificateUrl[0] + "//" + splitCertificateUrl[2];
+                string[] splitCertificateUrl = certificateUrl.Split("/", StringSplitOptions.RemoveEmptyEntries);
+                string keyVaultUri = splitCertificateUrl[0] + "//" + splitCertificateUrl[1];
 
-                var keyVaultSecretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
-                var certificateClient = new CertificateClient(new Uri(keyVaultUri), new DefaultAzureCredential());
+                var clientSecretCredential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+                var clientCertificateCredential = new ClientCertificateCredential(tenantId,clientId, certificateLocation);
+                var keyVaultSecretClient = new SecretClient(new Uri(keyVaultUri), clientSecretCredential);
+                var certificateClient = new CertificateClient(new Uri(keyVaultUri), clientCertificateCredential);
 
                 KeyVaultSecret keyVaultCertificatePfx = await keyVaultSecretClient.GetSecretAsync(certificateUrl.Replace("/certificates/", "/secrets/", StringComparison.OrdinalIgnoreCase)).ConfigureAwait(false);
                 KeyVaultCertificate keyVaultCertificateCer = await certificateClient.GetCertificateVersionAsync(certificateUrl.Replace("/secrets/", "/certificates/", StringComparison.OrdinalIgnoreCase), keyVaultCertificatePfx.Properties.Version).ConfigureAwait(false);

@@ -58,20 +58,16 @@ namespace GraphWebhooks_Core
             {
                 string clientId = KeyVaultOptions.Value.ClientId;
                 string clientSecret = KeyVaultOptions.Value.ClientSecret;
-                string certificateUrl = KeyVaultOptions.Value.CertificateUrl;
+                string certificateName = KeyVaultOptions.Value.CertificateName;
+                string keyVaultUri = KeyVaultOptions.Value.KeyVaultUrl;
                 string tenantId = KeyVaultOptions.Value.TenantId;
-                string certificateLocation = KeyVaultOptions.Value.CertificateLocation;
                 
-                string[] splitCertificateUrl = certificateUrl.Split("/", StringSplitOptions.RemoveEmptyEntries);
-                string keyVaultUri = splitCertificateUrl[0] + "//" + splitCertificateUrl[1];
-
                 var clientSecretCredential = new ClientSecretCredential(tenantId, clientId, clientSecret);
-                var clientCertificateCredential = new ClientCertificateCredential(tenantId,clientId, certificateLocation);
                 var keyVaultSecretClient = new SecretClient(new Uri(keyVaultUri), clientSecretCredential);
-                var certificateClient = new CertificateClient(new Uri(keyVaultUri), clientCertificateCredential);
+                var certificateClient = new CertificateClient(new Uri(keyVaultUri), clientSecretCredential);
 
-                KeyVaultSecret keyVaultCertificatePfx = await keyVaultSecretClient.GetSecretAsync(certificateUrl.Replace("/certificates/", "/secrets/", StringComparison.OrdinalIgnoreCase)).ConfigureAwait(false);
-                KeyVaultCertificate keyVaultCertificateCer = await certificateClient.GetCertificateVersionAsync(certificateUrl.Replace("/secrets/", "/certificates/", StringComparison.OrdinalIgnoreCase), keyVaultCertificatePfx.Properties.Version).ConfigureAwait(false);
+                KeyVaultSecret keyVaultCertificatePfx = await keyVaultSecretClient.GetSecretAsync(certificateName).ConfigureAwait(false);
+                KeyVaultCertificate keyVaultCertificateCer = await certificateClient.GetCertificateVersionAsync(certificateName, keyVaultCertificatePfx.Properties.Version).ConfigureAwait(false);
 
                 DecryptionCertificate = keyVaultCertificatePfx.Value;
                 EncryptionCertificate = Convert.ToBase64String(keyVaultCertificateCer.Cer);

@@ -53,7 +53,7 @@ namespace GraphWebhooks_Core.Controllers
             try
             {
                 // Create a subscription.
-                var newSubscription = await CreateSubscription(userId, tenantId, clientState, graphServiceClient).ConfigureAwait(false);
+                var newSubscription = await CreateSubscription(userId, tenantId, clientState).ConfigureAwait(false);
                 return View("Subscription", newSubscription);
             }
             catch (Exception e)
@@ -72,16 +72,10 @@ namespace GraphWebhooks_Core.Controllers
         {
             string clientState = Guid.NewGuid().ToString();
 
-            // Initialize the GraphServiceClient
-            var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.BaseUrlWithoutVersion, async () =>
-            {
-                return await tokenAcquisition.GetAccessTokenForAppAsync($"{appSettings.Value.BaseUrlWithoutVersion}/.default");
-            });
-
             try
             {
                 // Create a subscription.
-                var newSubscription = await CreateSubscription(string.Empty, string.Empty, clientState, graphClient).ConfigureAwait(false);
+                var newSubscription = await CreateSubscription(string.Empty, string.Empty, clientState, true).ConfigureAwait(false);
                 return View("Subscription", newSubscription);
             }
             catch (Exception e)
@@ -94,12 +88,12 @@ namespace GraphWebhooks_Core.Controllers
             }
         }
 
-        private async Task<Subscription> CreateSubscription(string userId, string tenantId, string clientState, GraphServiceClient graphClient)
+        private async Task<Subscription> CreateSubscription(string userId, string tenantId, string clientState, bool appOnly = false)
         {
             string encryptionCertificate = subscriptionOptions.Value.IncludeResourceData ? await keyVaultManager.GetEncryptionCertificate().ConfigureAwait(false) : null;
             string encryptionCertificateId = subscriptionOptions.Value.IncludeResourceData ? await keyVaultManager.GetEncryptionCertificateId().ConfigureAwait(false) : null;
 
-            var newSubscription = await graphClient.Subscriptions.Request().AddAsync(new Subscription
+            var newSubscription = await (appOnly ? graphServiceClient.Subscriptions.Request().WithAppOnly() : graphServiceClient.Subscriptions.Request()).AddAsync(new Subscription
             {
                 Resource = subscriptionOptions.Value.Resource,
                 ChangeType = subscriptionOptions.Value.ChangeType,
@@ -151,17 +145,9 @@ namespace GraphWebhooks_Core.Controllers
         {
             if (!string.IsNullOrEmpty(id))
             {
-
-                // Initialize the GraphServiceClient and delete the subscription.
-                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.BaseUrlWithoutVersion, async () =>
-                {
-                    return await tokenAcquisition.GetAccessTokenForAppAsync($"{appSettings.Value.BaseUrlWithoutVersion}/.default");
-                });
-
-
                 try
                 {
-                    await graphClient.Subscriptions[id].Request().DeleteAsync();
+                    await graphServiceClient.Subscriptions[id].Request().WithAppOnly().DeleteAsync();
                 }
                 catch (Exception e)
                 {
@@ -209,17 +195,9 @@ namespace GraphWebhooks_Core.Controllers
         {
             if (!string.IsNullOrEmpty(id))
             {
-
-                // Initialize the GraphServiceClient and renew the subscription.
-                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.BaseUrlWithoutVersion, async () =>
-                {
-                    return await tokenAcquisition.GetAccessTokenForAppAsync($"{appSettings.Value.BaseUrlWithoutVersion}/.default");
-                });
-
-
                 try
                 {
-                    var subscription = await graphClient.Subscriptions[id].Request().UpdateAsync(new Subscription
+                    var subscription = await graphServiceClient.Subscriptions[id].Request().WithAppOnly().UpdateAsync(new Subscription
                     {
                         ExpirationDateTime = DateTime.UtcNow + new TimeSpan(0, 0, 15, 0)
                     });

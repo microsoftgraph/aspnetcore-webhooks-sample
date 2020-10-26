@@ -169,16 +169,10 @@ namespace GraphWebhooks_Core.Controllers
 
                 if (notification.Resource.Contains("/message", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    // Initialize the GraphServiceClient.
-                    var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.BaseUrlWithoutVersion, async () =>
-                    {
-                        return await tokenAcquisition.GetAccessTokenForAppAsync($"{appSettings.Value.BaseUrlWithoutVersion}/.default");
-                    });
-
-                    var request = new MessageRequest(graphServiceClient.BaseUrl + "/" + notification.Resource, string.IsNullOrEmpty(subscription.UserId) ? graphClient : graphServiceClient, null);
+                    var request = new MessageRequest(graphServiceClient.BaseUrl + "/" + notification.Resource, graphServiceClient, null);
                     try
                     {
-                        var responseValue = await request.GetAsync();
+                        var responseValue = await (string.IsNullOrEmpty(subscription.UserId) ? request.WithAppOnly() : request).GetAsync();
                         notificationsToDisplay.Add(new NotificationViewModel(new
                         {
                             From = responseValue?.From?.EmailAddress?.Address,

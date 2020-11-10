@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>GraphWebhooks-Core</AssemblyName>
     <PackageId>GraphWebhooks-Core</PackageId>
     <UserSecretsId>aspnet-GraphWebhooks_Core-0cd494b5-8e8c-4a70-a2e2-11decd8c3e8c</UserSecretsId>

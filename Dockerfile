@@ -1,6 +1,6 @@
  # Sample contents of Dockerfile
  # Stage 1
- FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS builder
+ FROM mcr.microsoft.com/dotnet/core/sdk:5.0 AS builder
  WORKDIR /src
 
  # caches restore result by copying csproj file separately
@@ -12,7 +12,7 @@
  RUN dotnet publish --output /app/ --configuration Release
 
  # Stage 2
- FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+ FROM mcr.microsoft.com/dotnet/core/aspnet:5.0
  WORKDIR /app
  COPY --from=builder /app .
  ENTRYPOINT ["dotnet", "GraphWebhooks-Core.dll"]

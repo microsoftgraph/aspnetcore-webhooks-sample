@@ -29,7 +29,7 @@ extensions:
 
 Subscribe for [Microsoft Graph change notifications](https://docs.microsoft.com/graph/api/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
 
-This sample ASP.NET Core web application shows how to subscribe for change notifications as well as how to validate and decrypt change notifications with resource data (preview) when supported by the resource.
+This sample ASP.NET Core web application shows how to subscribe for change notifications as well as how to validate and decrypt change notifications with resource data when supported by the resource.
 
 This sample uses:
 
@@ -78,7 +78,7 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 - A [work, school or personal account](https://dev.office.com/devprogram). A tenant administrator account is required to grant application permissions.
 - The application ID and key from the application that you [register on the Azure Portal](#register-the-app).
 - A public HTTPS endpoint to receive and send HTTP requests. You can host this on Microsoft Azure or another service, or you can [use ngrok](#ngrok) or a similar tool while testing.
-- If you are also testing change notifications with resource data (preview), you also need a Microsoft Azure subscription to create an Azure KeyVault. If you do not have a Microsoft Azure subscription, you can [start a free trial](https://azure.microsoft.com/free/).
+- If you are also testing change notifications with resource data, you also need a Microsoft Azure subscription to create an Azure KeyVault. If you do not have a Microsoft Azure subscription, you can [start a free trial](https://azure.microsoft.com/free/).
 
 ### Create your app
 
@@ -133,7 +133,7 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 
 *Note: you are only required to follow these steps if the resource you are subscribing to supports including resources data in notifications and if you set `includeResourceData` to `true` in the configuration. In any other case, you can skip these steps. Refer to [the documentation](https://docs.microsoft.com/graph/api/resources/webhooks?view=graph-rest-beta) for a complete list of resources that support or not including resources data.*
 
-Follow the [documented steps](./KEYVAULT.md) to configure your Azure KeyVault in order to add support for change notifications with resource data (preview).
+Follow the [documented steps](./KEYVAULT.md) to configure your Azure KeyVault in order to add support for change notifications with resource data.
 
 ### Set up the ngrok proxy (optional)
 
@@ -182,8 +182,9 @@ Keep the console open while testing. If you close it, the tunnel also closes and
       - **NotificationUrl**: The HTTPS Notification URL that will receive subscription validation callbacks and notification events from Graph, replace *ENTER_YOUR_URL* with the HTTPS URL. Keep the */notification/listen* portion. If you're using ngrok, use the HTTPS URL that you copied eg `https://2885f9c5.ngrok.io/notification/listen`.
       - **Scope**: The permission to use to create the subscription, eg `Mail.Read` or `ChannelMessage.Read.All`.
       > For a complete list of resources, scopes required for these resources please refer to [the documentation](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-beta&tabs=http#permissions). For a list of which resources support including resource data with notifications please refer to [this additional documentation](https://docs.microsoft.com/graph/api/resources/webhooks?view=graph-rest-beta)
-   - Update **KeyVaultSettings** if you are using change notifications with resource data (preview) :
-      - **CertificateUrl**: the full url of the certificate on Azure KeyVault: `https://<keyvaultName>.vault.azure.net/certificates/<certificatename>`. Replace `<keyvaultname>` by the name of your KeyVault and `<certificatename>` by the name of the self-signed certificate you created.
+   - Update **KeyVaultSettings** if you are using change notifications with resource data :
+      - **CertificateName**: the name of the self-signed certificate you created in the KeyVault.
+      - **KeyVaultUrl**: the full url of the certificate on Azure KeyVault: `https://<keyvaultName>.vault.azure.net/`. Replace `<keyvaultname>` by the name of your KeyVault.
 
 1. Still within Solution Explorer, right-click on the project name and select **Manage User Secrets**. This app uses [Secret Manager](https://docs.microsoft.com/aspnet/core/fundamentals/configuration/?view=aspnetcore-3.1) configuration in storing sensitive app data - ClientId and ClientSecret.
 
@@ -197,12 +198,13 @@ Keep the console open while testing. If you close it, the tunnel also closes and
       }
       ```
 
-   - If you are trying change notifications with resource data (preview), you also need to add the following code in the **secret.json** window.
+   - If you are trying change notifications with resource data, you also need to add the following code in the **secret.json** window.
 
       ```JSON
       "KeyVaultSettings": {
          "ClientId": "ENTER_YOUR_APP_ID",
-         "ClientSecret": "ENTER_YOUR_SECRET"
+         "ClientSecret": "ENTER_YOUR_SECRET",
+         "TenantId": "ENTER_YOUR_TENANT_ID"
       }
       ```
 

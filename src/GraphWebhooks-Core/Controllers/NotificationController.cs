@@ -18,7 +18,6 @@ using Microsoft.Identity.Web;
 using GraphWebhooks_Core.Helpers.Interfaces;
 using System.Linq;
 using Microsoft.Extensions.Options;
-using System.IO;
 using GraphWebhooks_Core.Infrastructure;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -35,9 +34,10 @@ namespace GraphWebhooks_Core.Controllers
         readonly ITokenAcquisition tokenAcquisition;
         private readonly IOptions<MicrosoftIdentityOptions> identityOptions;
         private readonly KeyVaultManager keyVaultManager;
-        private readonly IOptions<AppSettings> appSettings;
+        private readonly IOptions<DownstreamApiSettings> appSettings;
         private readonly IOptions<SubscriptionOptions> subscriptionOptions;
         private readonly NotificationService notificationService = new NotificationService();
+        private readonly GraphServiceClient graphServiceClient;
 
         public NotificationController(ISubscriptionStore subscriptionStore,
                                       IHubContext<NotificationHub> notificationHub,
@@ -45,8 +45,9 @@ namespace GraphWebhooks_Core.Controllers
                                       ITokenAcquisition tokenAcquisition,
                                       IOptions<MicrosoftIdentityOptions> identityOptions,
                                       KeyVaultManager keyVaultManager,
-                                      IOptions<AppSettings> appSettings,
-                                      IOptions<SubscriptionOptions> subscriptionOptions)
+                                      IOptions<DownstreamApiSettings> appSettings,
+                                      IOptions<SubscriptionOptions> subscriptionOptions,
+                                      GraphServiceClient graphServiceClient)
         {
             this.subscriptionStore = subscriptionStore;
             this.notificationHub = notificationHub;
@@ -56,6 +57,7 @@ namespace GraphWebhooks_Core.Controllers
             this.keyVaultManager = keyVaultManager ?? throw new ArgumentNullException(nameof(keyVaultManager));
             this.appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
             this.subscriptionOptions = subscriptionOptions ?? throw new ArgumentNullException(nameof(subscriptionOptions));
+            this.graphServiceClient = graphServiceClient ?? throw new ArgumentNullException(nameof(graphServiceClient));
         }
 
         [Authorize]
@@ -72,6 +74,7 @@ namespace GraphWebhooks_Core.Controllers
 
         // The notificationUrl endpoint that's registered with the webhook subscription.
         [HttpPost]
+        [AuthorizeForScopes(ScopeKeySection = "SubscriptionSettings:Scope")]
         public async Task<IActionResult> Listen([FromQuery]string validationToken = null)
         {
             if (string.IsNullOrEmpty(validationToken))
@@ -164,21 +167,12 @@ namespace GraphWebhooks_Core.Controllers
                 if (!string.IsNullOrEmpty(subscription.UserId))
                     HttpContext.User = ClaimsPrincipalFactory.FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
 
-                // Initialize the GraphServiceClient.
-                var graphClient = await GraphServiceClientFactory.GetAuthenticatedGraphClient(appSettings.Value.GraphApiUrl, async () =>
+                if (notification.Resource.Contains("/message", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    if (string.IsNullOrEmpty(subscription.UserId))
-                        return await tokenAcquisition.GetAccessTokenForAppAsync(new string[] { $"{appSettings.Value.GraphApiUrl}/.default" });
-                    else
-                        return await tokenAcquisition.GetAccessTokenForUserAsync(new[] { subscriptionOptions.Value.Scope });
-                });
-
-                if (notification.ResourceData.ODataType == "#Microsoft.Graph.Message")
-                {
-                    var request = new MessageRequest(graphClient.BaseUrl + "/" + notification.Resource, graphClient, null);
+                    var request = new MessageRequest(graphServiceClient.BaseUrl + "/" + notification.Resource, graphServiceClient, null);
                     try
                     {
-                        var responseValue = await request.GetAsync();
+                        var responseValue = await (string.IsNullOrEmpty(subscription.UserId) ? request.WithAppOnly() : request).GetAsync();
                         notificationsToDisplay.Add(new NotificationViewModel(new
                         {
                             From = responseValue?.From?.EmailAddress?.Address,
@@ -190,8 +184,8 @@ namespace GraphWebhooks_Core.Controllers
                     catch (ServiceException se)
                     {
                         string errorMessage = se.Error.Message;
-                        string requestId = se.Error.InnerError.AdditionalData["request-id"].ToString();
-                        string requestDate = se.Error.InnerError.AdditionalData["date"].ToString();
+                        string requestId = se.Error.InnerError?.AdditionalData["request-id"]?.ToString();
+                        string requestDate = se.Error.InnerError?.AdditionalData["date"]?.ToString();
 
                         logger.LogError($"RetrievingMessages: { errorMessage } Request ID: { requestId } Date: { requestDate }");
                     }

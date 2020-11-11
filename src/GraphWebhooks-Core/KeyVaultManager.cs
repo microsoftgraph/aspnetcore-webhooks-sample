@@ -6,10 +6,10 @@ namespace GraphWebhooks_Core
 {
     using System;
     using System.Threading.Tasks;
-    using Microsoft.Azure.KeyVault;
-    using Microsoft.Azure.KeyVault.Models;
+    using Azure.Identity;
+    using Azure.Security.KeyVault.Secrets;
+    using Azure.Security.KeyVault.Certificates;
     using Microsoft.Extensions.Options;
-    using Microsoft.IdentityModel.Clients.ActiveDirectory;
     using Models;
 
     public class KeyVaultManager
@@ -58,20 +58,20 @@ namespace GraphWebhooks_Core
             {
                 string clientId = KeyVaultOptions.Value.ClientId;
                 string clientSecret = KeyVaultOptions.Value.ClientSecret;
-                string certificateUrl = KeyVaultOptions.Value.CertificateUrl;
+                string certificateName = KeyVaultOptions.Value.CertificateName;
+                string keyVaultUri = KeyVaultOptions.Value.KeyVaultUrl;
+                string tenantId = KeyVaultOptions.Value.TenantId;
+                
+                var clientSecretCredential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+                var keyVaultSecretClient = new SecretClient(new Uri(keyVaultUri), clientSecretCredential);
+                var certificateClient = new CertificateClient(new Uri(keyVaultUri), clientSecretCredential);
 
-                using KeyVaultClient keyVaultClient = new KeyVaultClient(async (authority, resource, scope) =>
-                 {
-                     ClientCredential adCredential = new ClientCredential(clientId, clientSecret);
-                     AuthenticationContext authenticationContext = new AuthenticationContext(authority, null);
-                     return (await authenticationContext.AcquireTokenAsync(resource, adCredential)).AccessToken;
-                 });
-                SecretBundle keyVaultCertificatePfx = await keyVaultClient.GetSecretAsync(certificateUrl).ConfigureAwait(false);
-                CertificateBundle keyVaultCertificateCer = await keyVaultClient.GetCertificateAsync(certificateUrl.Replace("/secrets/", "/certificates/", StringComparison.OrdinalIgnoreCase)).ConfigureAwait(false);
+                KeyVaultSecret keyVaultCertificatePfx = await keyVaultSecretClient.GetSecretAsync(certificateName).ConfigureAwait(false);
+                KeyVaultCertificate keyVaultCertificateCer = await certificateClient.GetCertificateVersionAsync(certificateName, keyVaultCertificatePfx.Properties.Version).ConfigureAwait(false);
 
                 DecryptionCertificate = keyVaultCertificatePfx.Value;
                 EncryptionCertificate = Convert.ToBase64String(keyVaultCertificateCer.Cer);
-                EncryptionCertificateId = keyVaultCertificatePfx.SecretIdentifier.Version;
+                EncryptionCertificateId = keyVaultCertificatePfx.Properties.Version;
             }
             catch (Exception ex)
             {

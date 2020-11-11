@@ -74,7 +74,7 @@ This sample app subscribes to any resource configured in `appsettings.json` in `
 To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the following:
 
 - Visual Studio 2019 installed on your development computer.
-- .NET Core 3.1 or later (for example for Windows) installed. You can follow the instructions at [.NET and C# - Get Started in 10 Minutes](https://www.microsoft.com/net/core). In addition to developing on Windows, you can develop on [Linux](https://www.microsoft.com/net/core#linuxredhat), [Mac](https://www.microsoft.com/net/core#macos), or [Docker](https://www.microsoft.com/net/core#dockercmd).
+- .NET Core 5.0 or later (for example for Windows) installed. You can follow the instructions at [.NET and C# - Get Started in 10 Minutes](https://www.microsoft.com/net/core). In addition to developing on Windows, you can develop on [Linux](https://www.microsoft.com/net/core#linuxredhat), [Mac](https://www.microsoft.com/net/core#macos), or [Docker](https://www.microsoft.com/net/core#dockercmd).
 - A [work, school or personal account](https://dev.office.com/devprogram). A tenant administrator account is required to grant application permissions.
 - The application ID and key from the application that you [register on the Azure Portal](#register-the-app).
 - A public HTTPS endpoint to receive and send HTTP requests. You can host this on Microsoft Azure or another service, or you can [use ngrok](#ngrok) or a similar tool while testing.

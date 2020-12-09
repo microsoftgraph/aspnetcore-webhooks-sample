@@ -39,7 +39,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Connections.Abstractions" Version="5.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.1" />
   </ItemGroup>
 
   <Target Name="PrepublishScript" BeforeTargets="PrepareForPublish">

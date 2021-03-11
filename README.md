@@ -25,7 +25,7 @@ extensions:
 ---
 # Microsoft Graph Change Notifications Sample for ASP.NET Core
 
-![.NET Core](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/workflows/.NET%20Core/badge.svg?branch=master)
+![.NET Core](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/workflows/.NET%20Core/badge.svg?branch=main)
 
 Subscribe for [Microsoft Graph change notifications](https://docs.microsoft.com/graph/api/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
 
@@ -251,27 +251,27 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 The following files contain code that's related to connecting to Microsoft Graph, creating subscriptions, and handling notifications.
 
-- [`appsettings.json`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/appsettings.json) Contains values used for authentication, authorization and endpoint URLs.
+- [`appsettings.json`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/appsettings.json) Contains values used for authentication, authorization and endpoint URLs.
 - secrets.json Contains the ClientId and ClientSecret used for authentication and authorization. To check whether these have been configured for the project run the following command from the directory in which the .csproj file exists:
 `dotnet user-secrets list`
-- [`Startup.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Startup.cs) Configures the app and the services it uses, including authentication.
+- [`Startup.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Startup.cs) Configures the app and the services it uses, including authentication.
 
 ### Controllers  
 
-- [`AccountController.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Controllers/AccountController.cs) Handles admin consent.  
-- [`NotificationController.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Controllers/NotificationController.cs) Receives notifications.  
-- [`SubscriptionContoller.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Controllers/SubscriptionController.cs) Creates and deletes subscriptions.
+- [`AccountController.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Controllers/AccountController.cs) Handles admin consent.  
+- [`NotificationController.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Controllers/NotificationController.cs) Receives notifications.  
+- [`SubscriptionContoller.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Controllers/SubscriptionController.cs) Creates and deletes subscriptions.
 
 ### Models
 
-- [`ChangeNotification.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Models/ChangeNotification.cs) Represents a change notification.
-- [`NotificationCollection.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Models/NotificationCollection.cs) Represents a collection of change notifications sent to the notification URL.
-- [`NotificationViewModel.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Models/NotificationViewModel.cs) Defines the **NotificationViewModel** that represents the data displayed in the Notification view.
+- [`ChangeNotification.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Models/ChangeNotification.cs) Represents a change notification.
+- [`NotificationCollection.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Models/NotificationCollection.cs) Represents a collection of change notifications sent to the notification URL.
+- [`NotificationViewModel.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Models/NotificationViewModel.cs) Defines the **NotificationViewModel** that represents the data displayed in the Notification view.
 
 ### Helpers
 
-- [`GraphServiceClientFactory.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/GraphServiceClientFactory.cs) Initiates the SDK client used to interact with Microsoft Graph.
-- [`SubscriptionStore.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/master/src/GraphWebhooks-Core/Helpers/SubscriptionStore.cs) Access layer for stored subscription information. The sample temporarily stores the info in HttpRuntime.Cache. Production apps will typically use some method of persistent storage.
+- [`GraphServiceClientFactory.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Helpers/GraphServiceClientFactory.cs) Initiates the SDK client used to interact with Microsoft Graph.
+- [`SubscriptionStore.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Helpers/SubscriptionStore.cs) Access layer for stored subscription information. The sample temporarily stores the info in HttpRuntime.Cache. Production apps will typically use some method of persistent storage.
 
 ### Microsoft.Identity.Web
 

@@ -28,7 +28,7 @@
 
     ![KeyVaultCreate3](docs/kv3.png)
 
-  - Fill in the required details as shown below and click "Access plolicy", then click "+ Add Access Policy"
+  - Fill in the required details as shown below and click "Access policy", then click "+ Add Access Policy"
     ![KeyVaultCreate4](docs/kv4.png)
 
     ![KeyVaultCreate5](docs/kv5.png)

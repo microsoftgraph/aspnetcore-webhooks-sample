@@ -5,17 +5,17 @@ products:
 - office-outlook
 - office-365
 - ms-graph
+- ms-graph-webhooks
 - office-teams
 - office-sp
 - m365
 languages:
 - aspx-csharp
 - csharp
-title: aspnetcore-webhooks-sample
 extensions:
   contentType: samples
   technologies:
-  - Microsoft Graph 
+  - Microsoft Graph
   - Microsoft identity platform
   services:
   - Outlook
@@ -23,6 +23,7 @@ extensions:
   - Microsoft identity platform
   createdDate: 3/3/2017 8:55:02 AM
 ---
+
 # Microsoft Graph Change Notifications Sample for ASP.NET Core
 
 ![.NET Core](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/workflows/.NET%20Core/badge.svg?branch=main)
@@ -44,7 +45,7 @@ This sample supports user-delegated authentication and uses:
 
 This sample supports app-only authentication and uses:
 
-- The [client grant flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow) to obtain an access token.
+- The [client grant flow](https://docs.microsoft.com/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow) to obtain an access token.
 
 [User-delegated authentication](https://docs.microsoft.com/graph/auth-v2-user) represents a user and the application being used when calling the Microsoft Graph. This type of authentication is best suited for scenarios when the user interacts with the application. [Application only authentication](https://docs.microsoft.com/graph/auth-v2-service) represents only the application itself when calling the Microsoft Graph, without any notion of user. This type of authentication is best suited for background services, daemons or other kind of applications users are not directly interacting with.
 
@@ -62,7 +63,7 @@ The following are common tasks that an application performs with webhooks subscr
 ## Using the Microsoft Graph Webhooks Sample
 
 The screenshot below shows the app's start page.
-  
+
 ![Microsoft Graph Webhook Sample for ASP.NET Core screenshot](docs/Page1.PNG)
 
 After the app creates a subscription, Microsoft Graph sends a notification to the registered endpoint when events happen for the subscribed resource. The app then reacts to the event.
@@ -123,8 +124,8 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
    1. Click the **Add a permission** button and then make sure that the **Microsoft APIs** tab is selected.
    1. In the **Commonly used Microsoft APIs** section, select **Microsoft Graph**.
    1. In the **Application permissions** section, make sure that the **Mail.Read** permission is checked. Use the search box if necessary.
-      > Also, in the **Delegated permissions** section, check the User.Read delegated permission for Azure Active Directory, so users can sign into the app to initiate the subscription process.  
-      > *Note: for other resources you need to select different permissions as documented [here](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-beta&tabs=http#permissions)*  
+      > Also, in the **Delegated permissions** section, check the User.Read delegated permission for Azure Active Directory, so users can sign into the app to initiate the subscription process.
+      > *Note: for other resources you need to select different permissions as documented [here](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-beta&tabs=http#permissions)*
       > *Note: depending on which authentication type you chose (app-only or user delegated) you need to select the corresponding permission **from the correct permission type**.*
    1. Select the **Add permissions** button.
    1. Select **Grant admin consent for `name of your organization>`** and **Yes**. This grants consent to the permissions of the application registration you just created to the current organization.
@@ -139,7 +140,7 @@ Follow the [documented steps](./KEYVAULT.md) to configure your Azure KeyVault in
 
 You must expose a public HTTPS endpoint to create a subscription and receive notifications from Microsoft Graph. While testing, you can use ngrok to temporarily allow messages from Microsoft Graph to tunnel to a *localhost* port on your computer.
 
-You can use the ngrok web interface (http://127.0.0.1:4040) to inspect the HTTP traffic that passes through the tunnel. To learn more about using ngrok, see the [ngrok website](https://ngrok.com/).  
+You can use the ngrok web interface (`http://127.0.0.1:4040`) to inspect the HTTP traffic that passes through the tunnel. To learn more about using ngrok, see the [ngrok website](https://ngrok.com/).
 
 1. In Solution Explorer, right-click the **GraphWebhooks-Core** project and choose **Properties**.
 
@@ -147,7 +148,7 @@ You can use the ngrok web interface (http://127.0.0.1:4040) to inspect the HTTP 
 
    ![The URL port number in the Properties window](docs/PortNumber.png)
 
-1. [Download ngrok](https://ngrok.com/download) for Windows.  
+1. [Download ngrok](https://ngrok.com/download) for Windows.
 
 1. Unzip the package and run ngrok.exe.
 
@@ -173,7 +174,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 1. Open the **GraphWebhooks-Core.sln** sample file in Visual Studio.
 
-1. In Solution Explorer, open the **appsettings.json** file in the root directory of the project.  
+1. In Solution Explorer, open the **appsettings.json** file in the root directory of the project.
 
    - Settings under **SubscriptionSettings**:
       - **ChangeType**: CSV; possible values created, updated, deleted.
@@ -211,9 +212,9 @@ Keep the console open while testing. If you close it, the tunnel also closes and
       > Note: do not forget to add a comma (,) between the **AzureAd** object and the **KeyVaultSettings** object.
    - For both code segments, replace the following keys:
 
-      - For the **ClientId** key, replace *ENTER_YOUR_APP_ID* with the application ID of your registered Azure application.  
+      - For the **ClientId** key, replace *ENTER_YOUR_APP_ID* with the application ID of your registered Azure application.
       - For the **ClientSecret** key, replace *ENTER_YOUR_SECRET* with the key of your registered Azure application. Note that in production apps you should always use certificates as your application secrets, but for this sample we will use a simple shared secret password.
-      - For the **Tenantd** key, replace *ENTER_YOUR_TENANT_ID* with your tenant ID, this information can be found on the application registration page.  
+      - For the **TenantId** key, replace *ENTER_YOUR_TENANT_ID* with your tenant ID, this information can be found on the application registration page.
 
 1. Make sure that the ngrok console is still running, then press F5 to build and run the solution in debug mode.
 
@@ -256,10 +257,10 @@ The following files contain code that's related to connecting to Microsoft Graph
 `dotnet user-secrets list`
 - [`Startup.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Startup.cs) Configures the app and the services it uses, including authentication.
 
-### Controllers  
+### Controllers
 
-- [`AccountController.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Controllers/AccountController.cs) Handles admin consent.  
-- [`NotificationController.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Controllers/NotificationController.cs) Receives notifications.  
+- [`AccountController.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Controllers/AccountController.cs) Handles admin consent.
+- [`NotificationController.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Controllers/NotificationController.cs) Receives notifications.
 - [`SubscriptionContoller.cs`](https://github.com/microsoftgraph/aspnetcore-apponlytoken-webhooks-sample/blob/main/src/GraphWebhooks-Core/Controllers/SubscriptionController.cs) Creates and deletes subscriptions.
 
 ### Models

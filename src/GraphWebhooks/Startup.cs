@@ -1,13 +1,22 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
 using System;
+using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace GraphWebhooks
 {
@@ -23,7 +32,57 @@ namespace GraphWebhooks
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
+            var scopes = new List<string>();
+            Configuration.Bind("GraphScopes", scopes);
+            services
+                // Use OpenId authentication
+                .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+                // Specify this is a web app and needs auth code flow
+                .AddMicrosoftIdentityWebApp(options => {
+                    Configuration.Bind("AzureAd", options);
+
+                    options.Prompt = "select_account";
+
+                    options.Events.OnAuthenticationFailed = context => {
+                        var error = WebUtility.UrlEncode(context.Exception.Message);
+                        context.Response
+                            .Redirect($"/Home/ErrorWithMessage?message=Authentication+error&debug={error}");
+                        context.HandleResponse();
+
+                        return Task.FromResult(0);
+                    };
+
+                    options.Events.OnRemoteFailure = context => {
+                        if (context.Failure is OpenIdConnectProtocolException)
+                        {
+                            var error = WebUtility.UrlEncode(context.Failure.Message);
+                            context.Response
+                                .Redirect($"/Home/ErrorWithMessage?message=Sign+in+error&debug={error}");
+                            context.HandleResponse();
+                        }
+
+                        return Task.FromResult(0);
+                    };
+                })
+                // Add ability to call web API (Graph)
+                // and get access tokens
+                .EnableTokenAcquisitionToCallDownstreamApi(options => {
+                    Configuration.Bind("AzureAd", options);
+                }, scopes)
+                // Add a GraphServiceClient via dependency injection
+                .AddMicrosoftGraph(options => {
+                    options.Scopes = string.Join(' ', scopes);
+                })
+                // Use in-memory token cache
+                // See https://github.com/AzureAD/microsoft-identity-web/wiki/token-cache-serialization
+                .AddInMemoryTokenCaches();
+
+            services.AddControllersWithViews(options => {
+                var policy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+                options.Filters.Add(new AuthorizeFilter(policy));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -44,6 +103,7 @@ namespace GraphWebhooks
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

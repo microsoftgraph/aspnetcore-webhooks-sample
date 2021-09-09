@@ -1,8 +1,27 @@
-﻿@{
+﻿<!-- Copyright (c) Microsoft Corporation. All rights reserved.
+     Licensed under the MIT License. -->
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="p-5 mb-4 bg-dark text-white rounded-3">
+    <h1>Microsoft Graph Notifications Sample</h1>
+    <p class="fs-4">Choose one of the options below to create a subscription</p>
+</div>
+<div class="row align-items-md-stretch">
+    <div class="col-md-6">
+        <div class="h-100 p-5 bg-light border rounded-3">
+            <h2>Delegated authentication</h2>
+            <p>Choose this option to sign in as a user and receive notifications when items are created in the user's Exchange Online mailbox</p>
+            <a class="btn btn-outline-secondary" href="#">Sign in and subscribe</a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="h-100 p-5 bg-light border rounded-3">
+            <h2>App-only authentication</h2>
+            <p>Choose this option to have the application receive notifications when messages are sent to any Teams channel</p>
+            <a class="btn btn-outline-secondary" href="#">Subscribe</a>
+        </div>
+    </div>
 </div>

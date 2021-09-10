@@ -1,0 +1,15 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved.
+     Licensed under the MIT License. -->
+
+@model Microsoft.Graph.Subscription
+@{
+    ViewData["Title"] = "Mailbox notifications";
+}
+
+@if (Model != null)
+{
+  <a class="btn btn-outline-secondary" asp-controller="Watch" asp-action="Unsubscribe" asp-route-subscriptionId="@Model.Id">Delete subscription</a>
+  <pre class="wrapped-pre border bg-light p-2">
+    <code>@Model.Id</code>
+  </pre>
+}

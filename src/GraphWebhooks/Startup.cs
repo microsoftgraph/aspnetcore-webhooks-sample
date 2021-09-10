@@ -6,6 +6,7 @@ using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GraphWebhooks.Services;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace GraphWebhooks
@@ -32,8 +34,8 @@ namespace GraphWebhooks
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var scopes = new List<string>();
-            Configuration.Bind("GraphScopes", scopes);
+            var scopesString = Configuration.GetValue<string>("GraphScopes") ?? "User.Read";
+            var scopesArray = scopesString.Split(' ');
             services
                 // Use OpenId authentication
                 .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
@@ -68,21 +70,25 @@ namespace GraphWebhooks
                 // and get access tokens
                 .EnableTokenAcquisitionToCallDownstreamApi(options => {
                     Configuration.Bind("AzureAd", options);
-                }, scopes)
+                }, scopesArray)
                 // Add a GraphServiceClient via dependency injection
                 .AddMicrosoftGraph(options => {
-                    options.Scopes = string.Join(' ', scopes);
+                    options.Scopes = scopesString;
                 })
                 // Use in-memory token cache
                 // See https://github.com/AzureAD/microsoft-identity-web/wiki/token-cache-serialization
                 .AddInMemoryTokenCaches();
 
-            services.AddControllersWithViews(options => {
+            services.AddSingleton<SubscriptionStore>();
+
+            services.AddMvc(options => {
                 var policy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .Build();
                 options.Filters.Add(new AuthorizeFilter(policy));
-            });
+            })
+            // Add the Microsoft Identity UI pages for signin/out
+            .AddMicrosoftIdentityUI();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -108,6 +114,7 @@ namespace GraphWebhooks
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapRazorPages();
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");

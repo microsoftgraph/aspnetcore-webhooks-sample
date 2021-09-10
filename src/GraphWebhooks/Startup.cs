@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using GraphWebhooks.Services;
+using GraphWebhooks.SignalR;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -81,6 +82,10 @@ namespace GraphWebhooks
 
             services.AddSingleton<SubscriptionStore>();
 
+            services
+                .AddSignalR(options => options.EnableDetailedErrors = true)
+                .AddJsonProtocol();
+
             services.AddMvc(options => {
                 var policy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
@@ -118,6 +123,7 @@ namespace GraphWebhooks
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapHub<NotificationHub>("/NotificationHub");
             });
         }
     }

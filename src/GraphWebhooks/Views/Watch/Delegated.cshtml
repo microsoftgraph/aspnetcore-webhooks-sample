@@ -2,14 +2,67 @@
      Licensed under the MIT License. -->
 
 @model Microsoft.Graph.Subscription
+@using System.Text.Json
 @{
     ViewData["Title"] = "Mailbox notifications";
+    var options = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
+    var jsonSubscription = Model == null ? string.Empty : JsonSerializer.Serialize(Model, options);
+    var subscriptionId = Model?.Id ?? string.Empty;
 }
 
-@if (Model != null)
-{
-  <a class="btn btn-outline-secondary" asp-controller="Watch" asp-action="Unsubscribe" asp-route-subscriptionId="@Model.Id">Delete subscription</a>
+<h1>Notifications</h1>
+<p class="fs-5 mb-3">Notifications should appear below when new messages are delivered to @User.GetUserGraphDisplayName()'s inbox.</p>
+<div class="d-flex">
+  <div class="fs-4 me-2">@User.GetUserGraphDisplayName()</div>
+  <button class="btn btn-outline-secondary me-2" type="button" data-bs-toggle="collapse" data-bs-target="#subscriptionDisplay">Show subscription</button>
+  <a class="btn btn-outline-secondary" asp-controller="Watch" asp-action="Unsubscribe" asp-route-subscriptionId="@subscriptionId">Delete subscription</a>
+</div>
+<div class="collapse mt-3" id="subscriptionDisplay">
   <pre class="wrapped-pre border bg-light p-2">
-    <code>@Model.Id</code>
+    <code>@jsonSubscription</code>
   </pre>
+</div>
+<hr/>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Subject</th>
+      <th>ID</th>
+    </tr>
+  </thead>
+  <tbody id="notifications"></tbody>
+</table>
+
+@section Scripts {
+  <script src="https://unpkg.com/@@microsoft/signalr@5.0.9/dist/browser/signalr.js"></script>
+  <script>
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl('/NotificationHub')
+      .configureLogging(signalR.LogLevel.Trace)
+      .build();
+
+    connection.on('showNotification', function (notifications) {
+      for (notification of notifications) {
+        const row = document.createElement('tr');
+
+        const subjectCell = document.createElement('td');
+        subjectCell.innerText = notification.resource.subject;
+        row.appendChild(subjectCell);
+
+        const idCell = document.createElement('td');
+        idCell.innerText = notification.resource.id;
+        row.appendChild(idCell);
+
+        document.getElementById('notifications').appendChild(row);
+      }
+    });
+
+    connection.start().then(function() {
+      console.log('SignalR connected');
+    });
+  </script>
 }

@@ -25,7 +25,7 @@ namespace GraphWebhooks.Controllers
         private readonly string _notificationHost;
 
         public WatchController(
-          GraphServiceClient graphClient,
+            GraphServiceClient graphClient,
             SubscriptionStore subscriptionStore,
             ILogger<WatchController> logger,
             IConfiguration config)
@@ -48,13 +48,15 @@ namespace GraphWebhooks.Controllers
             {
                 string userId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
                 _logger.LogInformation($"Authenticated user ID {userId}");
+                string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
 
                 var user = await _graphClient.Me
                     .Request()
-                    .Select(u => new {u.DisplayName, u.Mail})
+                    .Select(u => new {u.DisplayName, u.Mail, u.UserPrincipalName})
                     .GetAsync();
 
-                _logger.LogInformation($"Authenticated user: {user.DisplayName} ({user.Mail})");
+                _logger.LogInformation($"Authenticated user: {user.DisplayName} ({user.Mail ?? user.UserPrincipalName})");
+                User.AddUserGraphInfo(user);
 
                 var subscription = new Subscription
                 {
@@ -73,6 +75,7 @@ namespace GraphWebhooks.Controllers
                 {
                     Id = newSubscription.Id,
                     UserId = userId,
+                    TenantId = tenantId,
                     ClientState = newSubscription.ClientState
                 });
 

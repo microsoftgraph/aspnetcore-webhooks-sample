@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-using System;
-
 namespace GraphWebhooks.Models
 {
+    /// <summary>
+    /// View model used by the error page
+    /// </summary>
     public class ErrorViewModel
     {
         public string RequestId { get; set; }

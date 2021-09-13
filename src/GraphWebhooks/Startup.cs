@@ -1,10 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-using System;
 using System.Net;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using GraphWebhooks.Services;
 using GraphWebhooks.SignalR;
@@ -12,7 +9,6 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -80,8 +76,11 @@ namespace GraphWebhooks
                 // See https://github.com/AzureAD/microsoft-identity-web/wiki/token-cache-serialization
                 .AddInMemoryTokenCaches();
 
+            // Add custom services
             services.AddSingleton<SubscriptionStore>();
+            services.AddSingleton<CertificateService>();
 
+            // Add SignalR
             services
                 .AddSignalR(options => options.EnableDetailedErrors = true)
                 .AddJsonProtocol();
@@ -119,10 +118,12 @@ namespace GraphWebhooks
 
             app.UseEndpoints(endpoints =>
             {
+                // Need Razor pages for Microsoft.Identity.Web.UI's pages to work
                 endpoints.MapRazorPages();
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+                // Add SignalR notification hub
                 endpoints.MapHub<NotificationHub>("/NotificationHub");
             });
         }

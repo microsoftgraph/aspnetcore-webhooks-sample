@@ -17,21 +17,27 @@ using GraphWebhooks.Services;
 
 namespace GraphWebhooks.Controllers
 {
+    /// <summary>
+    /// Implements subscription management endpoints
+    /// </summary>
     public class WatchController : Controller
     {
         private readonly GraphServiceClient _graphClient;
         private readonly SubscriptionStore _subscriptionStore;
+        private readonly CertificateService _certificateService;
         private readonly ILogger<WatchController> _logger;
         private readonly string _notificationHost;
 
         public WatchController(
             GraphServiceClient graphClient,
             SubscriptionStore subscriptionStore,
+            CertificateService certificateService,
             ILogger<WatchController> logger,
             IConfiguration config)
         {
             _graphClient = graphClient;
             _subscriptionStore = subscriptionStore;
+            _certificateService = certificateService;
             _logger = logger;
 
             _notificationHost = config.GetValue<string>("NotificationHost");
@@ -41,23 +47,37 @@ namespace GraphWebhooks.Controllers
             }
         }
 
+        /// <summary>
+        /// GET /watch/delegated
+        /// Creates a new subscription to the authenticated user's inbox and
+        /// displays a page that updates with each received notification
+        /// </summary>
+        /// <returns></returns>
         [AuthorizeForScopes(ScopeKeySection = "GraphScopes")]
         public async Task<IActionResult> Delegated()
         {
             try
             {
+                // Delete any existing subscriptions for the user
+                await DeleteAllSubscriptions(false);
+
+                // Get the user's ID and tenant ID from the user's identity
                 string userId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
                 _logger.LogInformation($"Authenticated user ID {userId}");
                 string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
 
+                // Get the user from Microsoft Graph
                 var user = await _graphClient.Me
                     .Request()
                     .Select(u => new {u.DisplayName, u.Mail, u.UserPrincipalName})
                     .GetAsync();
 
                 _logger.LogInformation($"Authenticated user: {user.DisplayName} ({user.Mail ?? user.UserPrincipalName})");
+                // Add the user's display name and email address to the user's
+                // identity.
                 User.AddUserGraphInfo(user);
 
+                // Create the subscription
                 var subscription = new Subscription
                 {
                     ChangeType = "created",
@@ -65,12 +85,14 @@ namespace GraphWebhooks.Controllers
                     Resource = "me/mailfolders/inbox/messages",
                     ClientState = Guid.NewGuid().ToString(),
                     IncludeResourceData = false,
+                    // Subscription only lasts for one hour
                     ExpirationDateTime = DateTimeOffset.UtcNow.AddHours(1)
                 };
 
                 var newSubscription = await _graphClient.Subscriptions
                     .Request().AddAsync(subscription);
 
+                // Add the subscription to the subscription store
                 _subscriptionStore.SaveSubscriptionRecord(new SubscriptionRecord
                 {
                     Id = newSubscription.Id,
@@ -83,12 +105,83 @@ namespace GraphWebhooks.Controllers
             }
             catch (Exception ex)
             {
+                // Throw MicrosoftIdentityWebChallengeUserException to allow
+                // Microsoft.Identity.Web to challenge the user for re-auth or consent
                 if (ex.InnerException is MicrosoftIdentityWebChallengeUserException) throw;
+
+                // Otherwise display the error
                 return View().WithError($"Error creating subscription: {ex.Message}",
                     ex.ToString());
             }
         }
 
+        /// <summary>
+        /// GET /watch/apponly
+        /// Creates a new subscription to all Teams channel messages and
+        /// displays a page that updates with each received notification
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IActionResult> AppOnly()
+        {
+            try
+            {
+                // Delete any existing Teams channel subscriptions
+                // This is important as each app is only allowed one active
+                // subscription to the /teams/getAllMessages resource
+                await DeleteAllSubscriptions(true);
+
+                string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+
+                // Get the encryption certificate (public key)
+                var encryptionCertificate = await _certificateService.GetEncryptionCertificate();
+
+                // Create the subscription
+                var subscription = new Subscription
+                {
+                    ChangeType = "created",
+                    NotificationUrl = $"{_notificationHost}/listen",
+                    Resource = "/teams/getAllMessages",
+                    ClientState = Guid.NewGuid().ToString(),
+                    IncludeResourceData = true,
+                    ExpirationDateTime = DateTimeOffset.UtcNow.AddHours(1),
+                    EncryptionCertificateId = encryptionCertificate.Subject
+                };
+
+                // To get resource data, we must provide a public key that
+                // Microsoft Graph will use to encrypt their key
+                // See https://docs.microsoft.com/graph/webhooks-with-resource-data#creating-a-subscription
+                subscription.AddPublicEncryptionCertificate(encryptionCertificate);
+
+                var newSubscription = await _graphClient.Subscriptions
+                    .Request()
+                    .WithAppOnly()
+                    .AddAsync(subscription);
+
+                // Add the subscription to the subscription store
+                _subscriptionStore.SaveSubscriptionRecord(new SubscriptionRecord
+                {
+                    Id = newSubscription.Id,
+                    UserId = "APP-ONLY",
+                    TenantId = tenantId,
+                    ClientState = newSubscription.ClientState
+                });
+
+                return View(newSubscription).WithSuccess("Subscription created");
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Index", "Home")
+                    .WithError($"Error creating subscription: {ex.Message}",
+                        ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// GET /watch/unsubscribe
+        /// Deletes the user's inbox subscription and signs the user out
+        /// </summary>
+        /// <param name="subscriptionId">The ID of the subscription to delete</param>
+        /// <returns></returns>
         public async Task<IActionResult> Unsubscribe(string subscriptionId)
         {
             if (string.IsNullOrEmpty(subscriptionId))
@@ -99,20 +192,63 @@ namespace GraphWebhooks.Controllers
 
             try
             {
+                var subscription = _subscriptionStore.GetSubscriptionRecord(subscriptionId);
+
+                var appOnly = subscription.UserId == "APP-ONLY";
+                // To unsubscribe, just delete the subscription
                 await _graphClient.Subscriptions[subscriptionId]
                     .Request()
+                    .WithAppOnly(appOnly)
                     .DeleteAsync();
 
+                // Remove the subscription from the subscription store
                 _subscriptionStore.DeleteSubscriptionRecord(subscriptionId);
 
+                // Redirect to Microsoft.Identity.Web's signout page
                 return RedirectToAction("SignOut", "Account", new { area = "MicrosoftIdentity" });
             }
             catch (Exception ex)
             {
+                // Throw MicrosoftIdentityWebChallengeUserException to allow
+                // Microsoft.Identity.Web to challenge the user for re-auth or consent
                 if (ex.InnerException is MicrosoftIdentityWebChallengeUserException) throw;
+
+                // Otherwise display the error
                 return RedirectToAction("Index", "Home")
                     .WithError($"Error deleting subscription: {ex.Message}",
                         ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Deletes all current subscriptions
+        /// </summary>
+        /// <param name="appOnly">If true, all app-only subscriptions are removed. If false, all user subscriptions are removed</param>
+        private async Task DeleteAllSubscriptions(bool appOnly)
+        {
+            try
+            {
+                // Get all current subscriptions
+                var subscriptions = await _graphClient.Subscriptions
+                    .Request()
+                    .WithAppOnly(appOnly)
+                    .GetAsync();
+
+                foreach(var subscription in subscriptions.CurrentPage)
+                {
+                    // Delete the subscription
+                    await _graphClient.Subscriptions[subscription.Id]
+                        .Request()
+                        .WithAppOnly(appOnly)
+                        .DeleteAsync();
+
+                    // Remove the subscription from the subscription store
+                    _subscriptionStore.DeleteSubscriptionRecord(subscription.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting existing subscriptions");
             }
         }
     }

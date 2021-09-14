@@ -78,7 +78,7 @@ namespace GraphWebhooks.Controllers
             if (notifications == null) return Ok();
 
             // Validate any tokens in the payload
-            bool areTokensValid = await notifications.AreTokensValidV2(_tenantIds, _appIds);
+            bool areTokensValid = await AreTokensValid(notifications, _tenantIds, _appIds);
             if (!areTokensValid) return Unauthorized();
 
             // Process non-encrypted notifications first
@@ -131,6 +131,39 @@ namespace GraphWebhooks.Controllers
             // Return 202 to Graph to confirm receipt of notification.
             // Not sending this will cause Graph to retry the notification.
             return Accepted();
+        }
+
+        /// <summary>
+        /// Validates tokens contained in a ChangeNotificationCollection
+        /// </summary>
+        /// <param name="notifications">The ChangeNotificationCollection to validate</param>
+        /// <param name="tenantIds">A list of expected tenant IDs</param>
+        /// <param name="appIds">A list of expected app IDs</param>
+        /// <returns>true if all tokens are valid, false if not</returns>
+        private async Task<bool> AreTokensValid(
+            ChangeNotificationCollection notifications,
+            List<Guid> tenantIds,
+            List<Guid> appIds)
+        {
+            // First validate assuming tokens are v2 tokens
+            bool areTokensValid = await notifications.AreTokensValidV2(tenantIds, appIds);
+
+            if (!areTokensValid)
+            {
+                // If v2 validation failed, try v1
+                // This method throws if validation fails, so catch any exception
+                // and treat as validation failure
+                try
+                {
+                    areTokensValid = await notifications.AreTokensValid(tenantIds, appIds);
+                }
+                catch
+                {
+                    areTokensValid = false;
+                }
+            }
+
+            return areTokensValid;
         }
 
         /// <summary>

@@ -1,0 +1,67 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved.
+     Licensed under the MIT License. -->
+
+@model Microsoft.Graph.Subscription
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Teams chat message notifications";
+    var options = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
+    var jsonSubscription = Model == null ? string.Empty : JsonSerializer.Serialize(Model, options);
+    var subscriptionId = Model?.Id ?? string.Empty;
+}
+
+<h1>Notifications</h1>
+<p class="fs-5 mb-3">Notifications should appear below when new messages sent to any Teams channel in your organization.</p>
+<div class="d-flex">
+  <button class="btn btn-outline-secondary me-2" type="button" data-bs-toggle="collapse" data-bs-target="#subscriptionDisplay">Show subscription</button>
+  <a class="btn btn-outline-secondary" asp-controller="Watch" asp-action="Unsubscribe" asp-route-subscriptionId="@subscriptionId">Delete subscription</a>
+</div>
+<div class="collapse mt-3" id="subscriptionDisplay">
+  <pre class="wrapped-pre border bg-light p-2">
+    <code>@jsonSubscription</code>
+  </pre>
+</div>
+<hr/>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Sender</th>
+      <th>Message</th>
+    </tr>
+  </thead>
+  <tbody id="notifications"></tbody>
+</table>
+
+@section Scripts {
+  <script src="https://unpkg.com/@@microsoft/signalr@5.0.9/dist/browser/signalr.js"></script>
+  <script>
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl('/NotificationHub')
+      .configureLogging(signalR.LogLevel.Trace)
+      .build();
+
+    connection.on('showNotification', function (notifications) {
+      for (notification of notifications) {
+        const row = document.createElement('tr');
+
+        const senderCell = document.createElement('td');
+        senderCell.innerText = notification.resource.sender;
+        row.appendChild(senderCell);
+
+        const messageCell = document.createElement('td');
+        messageCell.innerText = notification.resource.message;
+        row.appendChild(messageCell);
+
+        document.getElementById('notifications').appendChild(row);
+      }
+    });
+
+    connection.start().then(function() {
+      console.log('SignalR connected');
+    });
+  </script>
+}

@@ -2,57 +2,50 @@
 
 ## Setting up a new Azure Key Vault
 
-> Note: you only need to go through the following steps if you **do not** have an existing Azure KeyVault.
+For official documentation on creating an Azure Key Vault, see [Quickstart: Create a key vault using the Azure portal](https://docs.microsoft.com/azure/key-vault/general/quick-create-portal).
 
-- **Step 1**: Go to [Azure Portal](https://portal.azure.com/).
+> **Note:** you only need to go through the following steps if you **do not** have an existing Azure Key Vault, or if you want to use a separate Azure Key Vault for this sample.
 
-- **Step 2**: Create a Resource Group
-  - Click on the navigation icon in the Azure Portal, click on "Resource groups"; on the next screen click "+ Add"
+1. Go to [Azure Portal](https://portal.azure.com/).
 
-    ![ResourceGroupCreate1](docs/rg1.png)
+1. In the portal menu, select **Create a resource**.
 
-    ![ResourceGroupCreate2](docs/rg2.png)
+    ![The Create a resource menu item on the portal menu in the Azure Portal](images/create-a-resource.png)
 
-- Fill in the details as shown below and click "Review + create"; on the next screen click "Create"
+1. Search for `Key Vault`. Select **Key Vault**, then select **Create**.
 
-    ![ResourceGroupCreate3](docs/rg3.png)
+1. Fill in the required fields as appropriate for your Azure subscription, and select **Next: Access policy**.
 
-    ![ResourceGroupCreate4](docs/rg4.png)
+1. Select **Add Access Policy**.
 
-- **Step 3**: Create Azure Key Vault
-  - Go to the resource group created in the step above, and click "+ Add", on the next screen search for "Key Vault" and hit the return key and then click "Create"
+1. Change the **Configure from template** dropdown to **Key, Secret, & Certificate Management**.
 
-    ![KeyVaultCreate1](docs/kv1.png)
+1. For **Select principal**, select the **None selected**. Enter your application ID from your app registration in the search box, then select your app registration. Select **Select**.
 
-    ![KeyVaultCreate2](docs/kv2.png)
+    ![A screenshot of the Add access policy page in the Azure portal](images/add-access-policy.png)
 
-    ![KeyVaultCreate3](docs/kv3.png)
+1. Select **Add**, then select **Review + create**. Finally, select **Create**.
 
-  - Fill in the required details as shown below and click "Access plolicy", then click "+ Add Access Policy"
-    ![KeyVaultCreate4](docs/kv4.png)
+1. Wait for the Azure Key Vault to finish deploying, then follow the steps in [Adding a self-signed certificate](#adding-a-self-signed-certificate).
 
-    ![KeyVaultCreate5](docs/kv5.png)
+## Add your application to an existing Azure Key Vault
 
-  - Fill in the required details and click "Select", then click "Add" and then click "Create"
+> **Note:** you only need to go through the following steps if you have an existing Azure Key Vault you want to reuse for the current sample.
 
-    ![KeyVaultCreate6](docs/kv6.png)
+1. Go to your existing Azure Key Vault in the Azure portal.
 
-    ![KeyVaultCreate7](docs/kv7.png)
+1. Select **Access policies** under **Settings**. Select **Add Access Policy**.
 
-## Connect an existing Key Vault to your Azure AD appid
+1. Change the **Configure from template** dropdown to **Key, Secret, & Certificate Management**.
 
-> Note: you only need to go through the following steps if you have an existing Azure KeyVault you want to reuse for the current sample.
+1. For **Select principal**, select the **None selected**. Enter your application ID from your app registration in the search box, then select your app registration. Select **Select**.
 
-1. Go to Access policies under Settings. Click Add Access Policy.
-1. Under Secret Permissions, select Get and List.
-1. Under Certificate Permissions, select Get and List.
-1. Under Select principal, select your appid.
-1. Click Add to finish your access policy. Wait for your access policy to deploy.
+1. Select **Add** to add the new access policy. Wait for your access policy to deploy.
 
 ## Adding a self-signed certificate
 
-Go to the Key Vault and click "Certificates", then click "+ Generate/Import"; Fill in the details as shown below and click "Create".
+1. Go to the Key Vault in the Azure Portal.
 
-![KeyVaultCreate8](docs/kv8.png)
+1. Select **Certificates** under **Settings**, then select **Generate/Import**.
 
-![KeyVaultCreate9](docs/kv9.png)
+1. Provide values for **Certificate Name** and **Subject**. Leave all other fields at their defaults, then select **Create**.

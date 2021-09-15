@@ -26,8 +26,8 @@ namespace GraphWebhooks.Services
             IConfiguration configuration,
             ILogger<CertificateService> logger)
         {
-            _config = configuration;
-            _logger = logger;
+            _config = configuration ?? throw new ArgumentException(nameof(configuration));
+            _logger = logger ?? throw new ArgumentException(nameof(logger));
         }
 
         /// <summary>

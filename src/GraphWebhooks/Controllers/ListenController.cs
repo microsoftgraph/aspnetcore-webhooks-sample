@@ -41,11 +41,12 @@ namespace GraphWebhooks.Controllers
             IConfiguration configuration,
             ILogger<ListenController> logger)
         {
-            _graphClient = graphClient;
-            _subscriptionStore = subscriptionStore;
-            _certificateService = certificateService;
-            _hubContext = hubContext;
-            _logger = logger;
+            _graphClient = graphClient ?? throw new ArgumentException(nameof(graphClient));
+            _subscriptionStore = subscriptionStore ?? throw new ArgumentException(nameof(subscriptionStore));
+            _certificateService = certificateService ?? throw new ArgumentException(nameof(certificateService));
+            _hubContext = hubContext ?? throw new ArgumentException(nameof(hubContext));
+            _logger = logger ?? throw new ArgumentException(nameof(logger));
+            _ = configuration ?? throw new ArgumentException(nameof(configuration));
 
             _appIds = new List<Guid> { new Guid(configuration.GetValue<string>("AzureAd:ClientId")) };
             _tenantIds = new List<Guid> { new Guid(configuration.GetValue<string>("AzureAd:TenantId")) };
@@ -78,7 +79,7 @@ namespace GraphWebhooks.Controllers
             if (notifications == null) return Ok();
 
             // Validate any tokens in the payload
-            bool areTokensValid = await AreTokensValid(notifications, _tenantIds, _appIds);
+            var areTokensValid = await AreTokensValid(notifications, _tenantIds, _appIds);
             if (!areTokensValid) return Unauthorized();
 
             // Process non-encrypted notifications first
@@ -110,8 +111,8 @@ namespace GraphWebhooks.Controllers
             foreach (var notification in notifications.Value.Where(n => n.EncryptedContent != null))
             {
                 // Decrypt the encrypted payload using private key
-                var chatMessage = await notification.EncryptedContent.DecryptAsync<ChatMessage>(async (id, thumbprint) => {
-                    return await _certificateService.GetDecryptionCertificate();
+                var chatMessage = await notification.EncryptedContent.DecryptAsync<ChatMessage>((id, thumbprint) => {
+                    return _certificateService.GetDecryptionCertificate();
                 });
 
                 // Add a SignalR notification for this message to the list
@@ -157,7 +158,7 @@ namespace GraphWebhooks.Controllers
                 {
                     areTokensValid = await notifications.AreTokensValid(tenantIds, appIds);
                 }
-                catch
+                catch (Microsoft.IdentityModel.Tokens.SecurityTokenValidationException)
                 {
                     areTokensValid = false;
                 }

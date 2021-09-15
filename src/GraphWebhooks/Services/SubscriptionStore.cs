@@ -16,7 +16,7 @@ namespace GraphWebhooks.Services
 
         public SubscriptionStore(IMemoryCache memoryCache)
         {
-            _cache = memoryCache;
+            _cache = memoryCache ?? throw new ArgumentException(nameof(memoryCache));
         }
 
         /// <summary>

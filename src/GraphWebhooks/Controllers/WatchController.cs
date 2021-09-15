@@ -33,14 +33,15 @@ namespace GraphWebhooks.Controllers
             SubscriptionStore subscriptionStore,
             CertificateService certificateService,
             ILogger<WatchController> logger,
-            IConfiguration config)
+            IConfiguration configuration)
         {
-            _graphClient = graphClient;
-            _subscriptionStore = subscriptionStore;
-            _certificateService = certificateService;
-            _logger = logger;
+            _graphClient = graphClient ?? throw new ArgumentException(nameof(graphClient));
+            _subscriptionStore = subscriptionStore ?? throw new ArgumentException(nameof(subscriptionStore));
+            _certificateService = certificateService ?? throw new ArgumentException(nameof(certificateService));
+            _logger = logger ?? throw new ArgumentException(nameof(logger));
+            _ = configuration ?? throw new ArgumentException(nameof(configuration));
 
-            _notificationHost = config.GetValue<string>("NotificationHost");
+            _notificationHost = configuration.GetValue<string>("NotificationHost");
             if (string.IsNullOrEmpty(_notificationHost) || _notificationHost == "YOUR_NGROK_PROXY")
             {
                 throw new ArgumentException("You must configure NotificationHost in appsettings.json");
@@ -62,9 +63,9 @@ namespace GraphWebhooks.Controllers
                 await DeleteAllSubscriptions(false);
 
                 // Get the user's ID and tenant ID from the user's identity
-                string userId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
+                var userId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
                 _logger.LogInformation($"Authenticated user ID {userId}");
-                string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+                var tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
 
                 // Get the user from Microsoft Graph
                 var user = await _graphClient.Me
@@ -130,7 +131,7 @@ namespace GraphWebhooks.Controllers
                 // subscription to the /teams/getAllMessages resource
                 await DeleteAllSubscriptions(true);
 
-                string tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+                var tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
 
                 // Get the encryption certificate (public key)
                 var encryptionCertificate = await _certificateService.GetEncryptionCertificate();

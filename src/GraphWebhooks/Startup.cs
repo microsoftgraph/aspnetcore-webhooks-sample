@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
 using System.Net;
 using System.Threading.Tasks;
 using GraphWebhooks.Services;
@@ -23,7 +24,7 @@ namespace GraphWebhooks
     {
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            Configuration = configuration ?? throw new ArgumentException(nameof(configuration));
         }
 
         public IConfiguration Configuration { get; }
@@ -31,7 +32,9 @@ namespace GraphWebhooks
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var scopesString = Configuration.GetValue<string>("GraphScopes") ?? "User.Read";
+            _ = services ?? throw new ArgumentException(nameof(services));
+
+            var scopesString = Configuration?.GetValue<string>("GraphScopes") ?? "User.Read";
             var scopesArray = scopesString.Split(' ');
             services
                 // Use OpenId authentication
@@ -98,6 +101,9 @@ namespace GraphWebhooks
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            _ = app ?? throw new ArgumentException(nameof(app));
+            _ = env ?? throw new ArgumentException(nameof(env));
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

@@ -6,7 +6,7 @@ namespace GraphWebhooks.Models
     /// <summary>
     /// Subscription record saved in subscription store
     /// </summary>
-    public class SubscriptionRecord
+    public record SubscriptionRecord
     {
         /// <summary>
         /// The ID of the subscription

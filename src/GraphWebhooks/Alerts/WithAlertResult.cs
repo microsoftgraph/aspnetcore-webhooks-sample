@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 
 namespace GraphWebhooks
 {
@@ -31,8 +32,10 @@ namespace GraphWebhooks
             DebugInfo = debugInfo;
         }
 
-        public async Task ExecuteResultAsync(ActionContext context)
+        public Task ExecuteResultAsync(ActionContext context)
         {
+            _ = context ?? throw new ArgumentException(nameof(context));
+
             var factory = context.HttpContext.RequestServices
             .GetService<ITempDataDictionaryFactory>();
 
@@ -42,7 +45,7 @@ namespace GraphWebhooks
             tempData["_alertMessage"] = Message;
             tempData["_alertDebugInfo"] = DebugInfo;
 
-            await Result.ExecuteResultAsync(context);
+            return Result.ExecuteResultAsync(context);
         }
     }
 }

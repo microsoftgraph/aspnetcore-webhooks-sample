@@ -1,14 +1,13 @@
 ---
 page_type: sample
-description: "This sample ASP.NET Core web application shows how to subscribe to change notifications using webhooks. This sample also supports receiving change notifications with data, validating and decrypting the payload."
+description: Create Microsoft Graph webhook subscriptions for an ASP.NET Core app, so that it can receive notifications of changes for any resource. This sample also supports receiving change notifications with data, validating and decrypting the payload.
 products:
-- office-outlook
-- office-365
 - ms-graph
-- ms-graph-webhooks
+- microsoft-graph-mail-api
+- microsoft-graph-teamwork-api
+- office-exchange-online
+- azure-active-directory
 - office-teams
-- office-sp
-- m365
 languages:
 - aspx-csharp
 - csharp
@@ -16,11 +15,11 @@ extensions:
   contentType: samples
   technologies:
   - Microsoft Graph
-  - Microsoft identity platform
   services:
-  - Outlook
+  - Microsoft Teams
+  - Azure AD
   - Office 365
-  - Microsoft identity platform
+  - Change notifications
   createdDate: 3/3/2017 8:55:02 AM
 ---
 

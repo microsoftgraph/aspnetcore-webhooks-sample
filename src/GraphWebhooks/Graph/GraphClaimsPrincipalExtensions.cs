@@ -52,4 +52,18 @@ public static class GraphClaimsPrincipalExtensions
             new Claim(GraphClaimTypes.Email,
                 user.Mail ?? user.UserPrincipalName ?? string.Empty));
     }
+
+    /// <summary>
+    /// Adds unique user ID and unique tenant ID to a ClaimsPrincipal. This is necessary for
+    /// MSAL to extract the user's MSAL ID from the ClaimsPrincipal.
+    /// </summary>
+    /// <param name="claimsPrincipal">The ClaimsPrincipal that contains the user's identity</param>
+    /// <param name="uid">The user's ID</param>
+    /// <param name="utid">The user's tenant ID</param>
+    public static void AddMsalInfo(this ClaimsPrincipal claimsPrincipal, string uid, string utid)
+    {
+        var identity = claimsPrincipal.Identity as ClaimsIdentity;
+        identity.AddClaim(new Claim("uid", uid));
+        identity.AddClaim(new Claim("utid", utid));
+    }
 }

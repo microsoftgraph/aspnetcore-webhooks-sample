@@ -187,6 +187,7 @@ public class ListenController : Controller
                 // Microsoft.Identity.Web to acquire the proper token for the proper user
                 HttpContext.User = ClaimsPrincipalFactory
                     .FromTenantIdAndObjectId(subscription.TenantId, subscription.UserId);
+                HttpContext.User.AddMsalInfo(subscription.UserId, subscription.TenantId);
             }
 
             // The notification has the relative URL to the message in the Resource

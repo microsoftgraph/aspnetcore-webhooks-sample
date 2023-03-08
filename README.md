@@ -75,7 +75,7 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 
 1. Select **New registration**. On the **Register an application** page, set the values as follows.
 
-    - Set **Name** to `Node.js Graph Notification Webhook Sample`.
+    - Set **Name** to `ASP.NET Graph Notification Webhook Sample`.
     - Set **Supported account types** to **Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts**.
     - Under **Redirect URI**, set the first drop-down to `Web` and set the value to `https://localhost:5001/`.
 

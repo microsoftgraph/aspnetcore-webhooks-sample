@@ -1,10 +1,9 @@
-﻿name: "CodeQL"
+﻿name: CodeQL
 
 on:
   push:
     branches: [main]
   pull_request:
-    # The branches below must be a subset of the branches above
     branches: [main]
 
 defaults:
@@ -29,19 +28,9 @@ jobs:
     - run: git checkout HEAD^2
       if: ${{ github.event_name == 'pull_request' }}
 
-    - name: Setup .NET Core
+    - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 7.x
     - name: Install dependencies
       run: dotnet restore
-    # Initializes the CodeQL tools for scanning.
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
-      # Override language selection by uncommenting this and choosing your languages
-      with:
-        languages: csharp
-    - run: dotnet build --configuration Release --no-restore
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1

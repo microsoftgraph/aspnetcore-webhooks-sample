@@ -10,7 +10,7 @@
       "request": "launch",
       "preLaunchTask": "build",
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/src/GraphWebhooks/bin/Debug/net5.0/GraphWebhooks.dll",
+      "program": "${workspaceFolder}/src/GraphWebhooks/bin/Debug/net7.0/GraphWebhooks.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/GraphWebhooks",
       "stopAtEntry": false,

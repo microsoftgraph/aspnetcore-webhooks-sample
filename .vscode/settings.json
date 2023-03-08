@@ -1,5 +1,13 @@
 {
   "cSpell.ignoreWords": [
     "signin-oidc"
+  ],
+  "cSpell.words": [
+    "apponly",
+    "appsettings",
+    "HSTS",
+    "mailfolders",
+    "signin",
+    "signout"
   ]
 }

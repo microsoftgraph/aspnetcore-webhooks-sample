@@ -5,9 +5,9 @@ products:
 - ms-graph
 - microsoft-graph-mail-api
 - microsoft-graph-teamwork-api
-- microsoft-graph-change-notifications-api
 - office-exchange-online
-- azure-active-directory
+- entra
+- entra-id
 - office-teams
 languages:
 - aspx-csharp

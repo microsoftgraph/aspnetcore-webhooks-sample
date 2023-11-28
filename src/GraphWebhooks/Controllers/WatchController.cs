@@ -34,12 +34,9 @@ public class WatchController : Controller
         _logger = logger ?? throw new ArgumentException(nameof(logger));
         _ = configuration ?? throw new ArgumentException(nameof(configuration));
 
-        var notificationHost = configuration.GetValue<string>("NotificationHost");
-        if (string.IsNullOrEmpty(notificationHost) || notificationHost == "YOUR_NGROK_PROXY")
-        {
+        _notificationHost = configuration.GetValue<string>("NotificationHost") is string hostValue &&
+            !string.IsNullOrEmpty(hostValue) && hostValue != "YOUR_NGROK_PROXY" ? hostValue :
             throw new ArgumentException("You must configure NotificationHost in appsettings.json");
-        }
-        _notificationHost = notificationHost;
     }
 
     /// <summary>

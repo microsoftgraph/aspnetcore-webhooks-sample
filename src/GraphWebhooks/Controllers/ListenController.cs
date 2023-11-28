@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Microsoft.Identity.Web;
+using Microsoft.Kiota.Abstractions.Serialization;
 using Microsoft.Kiota.Serialization.Json;
 
 namespace GraphWebhooks.Controllers;
@@ -43,9 +44,11 @@ public class ListenController : Controller
         _logger = logger ?? throw new ArgumentException(nameof(logger));
         _ = configuration ?? throw new ArgumentException(nameof(configuration));
 
-        var appId = configuration.GetValue<string>("AzureAd:ClientId") ??
+        var appId = configuration.GetValue<string>("AzureAd:ClientId") is string appIdValue &&
+            !string.IsNullOrEmpty(appIdValue) ? appIdValue :
             throw new Exception("AzureAd:ClientId missing in app settings");
-        var tenantId = configuration.GetValue<string>("AzureAd:TenantId") ??
+        var tenantId = configuration.GetValue<string>("AzureAd:TenantId") is string tenantIdValue &&
+            !string.IsNullOrEmpty(tenantIdValue) ? tenantIdValue :
             throw new Exception("AzureAd:TenantId missing in app settings");
         _appIds = new List<Guid> { new Guid(appId) };
         _tenantIds = new List<Guid> { new Guid(tenantId) };
@@ -74,8 +77,7 @@ public class ListenController : Controller
         var bodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(bodyStream);
         bodyStream.Seek(0, SeekOrigin.Begin);
-        var parseNode = new JsonParseNodeFactory().GetRootParseNode("application/json", bodyStream);
-        var notifications = parseNode.GetObjectValue(ChangeNotificationCollection.CreateFromDiscriminatorValue);
+        var notifications = KiotaJsonSerializer.Deserialize<ChangeNotificationCollection>(bodyStream);
 
         if (notifications == null || notifications.Value == null) return Ok();
 

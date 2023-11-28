@@ -18,21 +18,21 @@ public static class ChangeNotificationEncryptedContentExtensions
 {
     public static async Task<T?> DecryptAsync<T>(
         this ChangeNotificationEncryptedContent encryptedContent,
-        Func<string, string, Task<X509Certificate2>> certificateProvider) where T : IParsable, new()
+        Func<string, string, Task<X509Certificate2>> certificateProvider,
+        CancellationToken cancellationToken = default) where T : IParsable, new()
     {
         if (certificateProvider == null)
             throw new ArgumentNullException(nameof(certificateProvider));
 
-        var stringContent = await encryptedContent.DecryptAsync(certificateProvider).ConfigureAwait(false);
-        using var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(stringContent));
-        var parseNodeFactory = ParseNodeFactoryRegistry.DefaultInstance;
-        var rootNode = parseNodeFactory.GetRootParseNode("application/json", contentStream);
-        return rootNode.GetObjectValue<T>((parsable) => new T());
+        var stringContent = await encryptedContent.DecryptAsync(certificateProvider, cancellationToken)
+            .ConfigureAwait(false);
+        return KiotaJsonSerializer.Deserialize<T>(stringContent);
     }
 
     private static async Task<string> DecryptAsync(
         this ChangeNotificationEncryptedContent encryptedContent,
-        Func<string, string, Task<X509Certificate2>> certificateProvider)
+        Func<string, string, Task<X509Certificate2>> certificateProvider,
+        CancellationToken cancellationToken = default)
     {
         if (certificateProvider == null)
             throw new ArgumentNullException(nameof(certificateProvider));
@@ -58,11 +58,15 @@ public static class ChangeNotificationEncryptedContentExtensions
         }
         else
         {
-            return Encoding.UTF8.GetString(AesDecrypt(Convert.FromBase64String(encryptedContent.Data), decryptedSymmetricKey));
+            return Encoding.UTF8.GetString(
+                await AesDecryptAsync(Convert.FromBase64String(encryptedContent.Data), decryptedSymmetricKey, cancellationToken));
         }
     }
 
-    private static byte[] AesDecrypt(byte[] dataToDecrypt, byte[] key)
+    private static async Task<byte[]> AesDecryptAsync(
+        byte[] dataToDecrypt,
+        byte[] key,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -79,8 +83,8 @@ public static class ChangeNotificationEncryptedContentExtensions
             cryptoServiceProvider.IV = numArray;
             using var memoryStream = new MemoryStream();
             using var cryptoStream = new CryptoStream(memoryStream, cryptoServiceProvider.CreateDecryptor(), CryptoStreamMode.Write);
-            cryptoStream.Write(dataToDecrypt, 0, dataToDecrypt.Length);
-            cryptoStream.FlushFinalBlock();
+            await cryptoStream.WriteAsync(dataToDecrypt, 0, dataToDecrypt.Length, cancellationToken);
+            await cryptoStream.FlushFinalBlockAsync(cancellationToken);
             return memoryStream.ToArray();
         }
         catch (Exception ex)

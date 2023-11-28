@@ -45,7 +45,7 @@ public static class GraphClaimsPrincipalExtensions
     public static void AddUserGraphInfo(this ClaimsPrincipal claimsPrincipal, User? user)
     {
         _ = user ?? throw new ArgumentNullException(nameof(user));
-        var identity = claimsPrincipal.Identity as ClaimsIdentity ??
+        if (claimsPrincipal.Identity is not ClaimsIdentity identity)
             throw new Exception("Could not access identity");
 
         identity.AddClaim(
@@ -64,7 +64,7 @@ public static class GraphClaimsPrincipalExtensions
     /// <param name="utid">The user's tenant ID</param>
     public static void AddMsalInfo(this ClaimsPrincipal claimsPrincipal, string uid, string utid)
     {
-        var identity = claimsPrincipal.Identity as ClaimsIdentity ??
+        if (claimsPrincipal.Identity is not ClaimsIdentity identity)
             throw new Exception("Could not access identity");
         identity.AddClaim(new Claim("uid", uid));
         identity.AddClaim(new Claim("utid", utid));

@@ -52,7 +52,7 @@ This sample implements the following scenarios.
 
 To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the following:
 
-- [.NET 7.0](https://dotnet.microsoft.com/download) or later.
+- [.NET 8.0](https://dotnet.microsoft.com/download) or later.
 - A [work, or school account](https://dev.office.com/devprogram). **Note:** The app-only Teams channel scenario in the sample requires a tenant administrator account to grant application permissions for the app-only portion.
 - The application ID and secret from the application that you [register on the Azure Portal](#create-the-app-registration).
 - A public HTTPS endpoint to receive and send HTTP requests. You can host this on Microsoft Azure or another service, or you can [use ngrok](#set-up-the-ngrok-proxy-optional) or a similar tool while testing.

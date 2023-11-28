@@ -1,7 +1,7 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using System.Security.Claims;
 
 namespace GraphWebhooks;
@@ -22,7 +22,7 @@ public static class GraphClaimsPrincipalExtensions
     /// </summary>
     /// <param name="claimsPrincipal">The ClaimsPrincipal that contains the user's identity</param>
     /// <returns>The user's display name</returns>
-    public static string GetUserGraphDisplayName(this ClaimsPrincipal claimsPrincipal)
+    public static string? GetUserGraphDisplayName(this ClaimsPrincipal claimsPrincipal)
     {
         return claimsPrincipal.FindFirstValue(GraphClaimTypes.DisplayName);
     }
@@ -32,7 +32,7 @@ public static class GraphClaimsPrincipalExtensions
     /// </summary>
     /// <param name="claimsPrincipal">The ClaimsPrincipal that contains the user's identity</param>
     /// <returns>The user's email address</returns>
-    public static string GetUserGraphEmail(this ClaimsPrincipal claimsPrincipal)
+    public static string? GetUserGraphEmail(this ClaimsPrincipal claimsPrincipal)
     {
         return claimsPrincipal.FindFirstValue(GraphClaimTypes.Email);
     }
@@ -42,9 +42,11 @@ public static class GraphClaimsPrincipalExtensions
     /// </summary>
     /// <param name="claimsPrincipal">The ClaimsPrincipal that contains the user's identity</param>
     /// <param name="user">The Microsoft.Graph.User object that contains the user's display name and email address</param>
-    public static void AddUserGraphInfo(this ClaimsPrincipal claimsPrincipal, User user)
+    public static void AddUserGraphInfo(this ClaimsPrincipal claimsPrincipal, User? user)
     {
-        var identity = claimsPrincipal.Identity as ClaimsIdentity;
+        _ = user ?? throw new ArgumentNullException(nameof(user));
+        var identity = claimsPrincipal.Identity as ClaimsIdentity ??
+            throw new Exception("Could not access identity");
 
         identity.AddClaim(
             new Claim(GraphClaimTypes.DisplayName, user.DisplayName ?? string.Empty));
@@ -62,7 +64,8 @@ public static class GraphClaimsPrincipalExtensions
     /// <param name="utid">The user's tenant ID</param>
     public static void AddMsalInfo(this ClaimsPrincipal claimsPrincipal, string uid, string utid)
     {
-        var identity = claimsPrincipal.Identity as ClaimsIdentity;
+        var identity = claimsPrincipal.Identity as ClaimsIdentity ??
+            throw new Exception("Could not access identity");
         identity.AddClaim(new Claim("uid", uid));
         identity.AddClaim(new Claim("utid", utid));
     }

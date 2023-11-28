@@ -1,13 +1,10 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Web;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using GraphWebhooks.Models;
 using GraphWebhooks.Services;
 
@@ -37,11 +34,12 @@ public class WatchController : Controller
         _logger = logger ?? throw new ArgumentException(nameof(logger));
         _ = configuration ?? throw new ArgumentException(nameof(configuration));
 
-        _notificationHost = configuration.GetValue<string>("NotificationHost");
-        if (string.IsNullOrEmpty(_notificationHost) || _notificationHost == "YOUR_NGROK_PROXY")
+        var notificationHost = configuration.GetValue<string>("NotificationHost");
+        if (string.IsNullOrEmpty(notificationHost) || notificationHost == "YOUR_NGROK_PROXY")
         {
             throw new ArgumentException("You must configure NotificationHost in appsettings.json");
         }
+        _notificationHost = notificationHost;
     }
 
     /// <summary>
@@ -64,12 +62,12 @@ public class WatchController : Controller
             var tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
 
             // Get the user from Microsoft Graph
-            var user = await _graphClient.Me
-                .Request()
-                .Select(u => new {u.DisplayName, u.Mail, u.UserPrincipalName})
-                .GetAsync();
+            var user = await _graphClient.Me.GetAsync(req =>
+            {
+                req.QueryParameters.Select = new[] { "displayName", "mail", "userPrincipalName" };
+            });
 
-            _logger.LogInformation($"Authenticated user: {user.DisplayName} ({user.Mail ?? user.UserPrincipalName})");
+            _logger.LogInformation($"Authenticated user: {user?.DisplayName} ({user?.Mail ?? user?.UserPrincipalName})");
             // Add the user's display name and email address to the user's
             // identity.
             User.AddUserGraphInfo(user);
@@ -87,7 +85,12 @@ public class WatchController : Controller
             };
 
             var newSubscription = await _graphClient.Subscriptions
-                .Request().AddAsync(subscription);
+                .PostAsync(subscription);
+
+            if (newSubscription == null)
+            {
+                return View().WithError("No subscription was returned.");
+            }
 
             // Add the subscription to the subscription store
             _subscriptionStore.SaveSubscriptionRecord(new SubscriptionRecord
@@ -133,7 +136,9 @@ public class WatchController : Controller
             var encryptionCertificate = await _certificateService.GetEncryptionCertificate();
 
             // Create the subscription
-            var subscription = new Subscription
+            // This should work with just the base Subscription object, blocked by bug:
+            // https://github.com/microsoftgraph/msgraph-sdk-dotnet/issues/2237
+            var subscription = new EncryptableSubscription
             {
                 ChangeType = "created",
                 NotificationUrl = $"{_notificationHost}/listen",
@@ -141,18 +146,25 @@ public class WatchController : Controller
                 ClientState = Guid.NewGuid().ToString(),
                 IncludeResourceData = true,
                 ExpirationDateTime = DateTimeOffset.UtcNow.AddHours(1),
-                EncryptionCertificateId = encryptionCertificate.Subject
+                // To get resource data, we must provide a public key that
+                // Microsoft Graph will use to encrypt their key
+                // See https://docs.microsoft.com/graph/webhooks-with-resource-data#creating-a-subscription
+                EncryptionCertificateId = encryptionCertificate.Subject,
             };
 
-            // To get resource data, we must provide a public key that
-            // Microsoft Graph will use to encrypt their key
-            // See https://docs.microsoft.com/graph/webhooks-with-resource-data#creating-a-subscription
             subscription.AddPublicEncryptionCertificate(encryptionCertificate);
 
-            var newSubscription = await _graphClient.Subscriptions
-                .Request()
-                .WithAppOnly()
-                .AddAsync(subscription);
+
+            var newSubscription = await _graphClient.Subscriptions.PostAsync(subscription, req =>
+            {
+                req.Options.WithAppOnly();
+            });
+
+            if (newSubscription == null)
+            {
+                return RedirectToAction("Index", "Home")
+                    .WithError("No subscription was returned.");
+            }
 
             // Add the subscription to the subscription store
             _subscriptionStore.SaveSubscriptionRecord(new SubscriptionRecord
@@ -191,15 +203,19 @@ public class WatchController : Controller
         {
             var subscription = _subscriptionStore.GetSubscriptionRecord(subscriptionId);
 
-            var appOnly = subscription.UserId == "APP-ONLY";
-            // To unsubscribe, just delete the subscription
-            await _graphClient.Subscriptions[subscriptionId]
-                .Request()
-                .WithAppOnly(appOnly)
-                .DeleteAsync();
+            if (subscription != null)
+            {
+                var appOnly = subscription.UserId == "APP-ONLY";
+                // To unsubscribe, just delete the subscription
+                await _graphClient.Subscriptions[subscriptionId]
+                    .DeleteAsync(req =>
+                    {
+                        req.Options.WithAppOnly(appOnly);
+                    });
 
-            // Remove the subscription from the subscription store
-            _subscriptionStore.DeleteSubscriptionRecord(subscriptionId);
+                // Remove the subscription from the subscription store
+                _subscriptionStore.DeleteSubscriptionRecord(subscriptionId);
+            }
 
             // Redirect to Microsoft.Identity.Web's signout page
             return RedirectToAction("SignOut", "Account", new { area = "MicrosoftIdentity" });
@@ -227,20 +243,22 @@ public class WatchController : Controller
         {
             // Get all current subscriptions
             var subscriptions = await _graphClient.Subscriptions
-                .Request()
-                .WithAppOnly(appOnly)
-                .GetAsync();
+                .GetAsync(req =>
+                {
+                    req.Options.WithAppOnly(appOnly);
+                });
 
-            foreach(var subscription in subscriptions.CurrentPage)
+            foreach(var subscription in subscriptions?.Value ?? new List<Subscription>())
             {
                 // Delete the subscription
                 await _graphClient.Subscriptions[subscription.Id]
-                    .Request()
-                    .WithAppOnly(appOnly)
-                    .DeleteAsync();
+                    .DeleteAsync(req =>
+                    {
+                        req.Options.WithAppOnly(appOnly);
+                    });
 
                 // Remove the subscription from the subscription store
-                _subscriptionStore.DeleteSubscriptionRecord(subscription.Id);
+                _subscriptionStore.DeleteSubscriptionRecord(subscription.Id!);
             }
         }
         catch (Exception ex)

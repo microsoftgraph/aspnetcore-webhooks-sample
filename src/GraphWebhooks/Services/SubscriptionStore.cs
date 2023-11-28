@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using GraphWebhooks.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -25,6 +24,7 @@ public class SubscriptionStore
     /// <param name="record">The subscription to add</param>
     public void SaveSubscriptionRecord(SubscriptionRecord record)
     {
+        if (string.IsNullOrEmpty(record.Id)) throw new Exception("ID of record cannot be empty");
         var options = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(2));
         _cache.Set(record.Id, record, options);
     }
@@ -34,7 +34,7 @@ public class SubscriptionStore
     /// </summary>
     /// <param name="subscriptionId">The subscription ID</param>
     /// <returns>The subscription record if found, null if not</returns>
-    public SubscriptionRecord GetSubscriptionRecord(string subscriptionId)
+    public SubscriptionRecord? GetSubscriptionRecord(string subscriptionId)
     {
         _cache.TryGetValue<SubscriptionRecord>(subscriptionId, out var record);
         return record;

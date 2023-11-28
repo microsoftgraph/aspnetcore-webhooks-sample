@@ -1,21 +1,16 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using GraphWebhooks.Models;
 using GraphWebhooks.Services;
 using GraphWebhooks.SignalR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using Microsoft.Identity.Web;
+using Microsoft.Kiota.Serialization.Json;
 
 namespace GraphWebhooks.Controllers;
 
@@ -48,8 +43,12 @@ public class ListenController : Controller
         _logger = logger ?? throw new ArgumentException(nameof(logger));
         _ = configuration ?? throw new ArgumentException(nameof(configuration));
 
-        _appIds = new List<Guid> { new Guid(configuration.GetValue<string>("AzureAd:ClientId")) };
-        _tenantIds = new List<Guid> { new Guid(configuration.GetValue<string>("AzureAd:TenantId")) };
+        var appId = configuration.GetValue<string>("AzureAd:ClientId") ??
+            throw new Exception("AzureAd:ClientId missing in app settings");
+        var tenantId = configuration.GetValue<string>("AzureAd:TenantId") ??
+            throw new Exception("AzureAd:TenantId missing in app settings");
+        _appIds = new List<Guid> { new Guid(appId) };
+        _tenantIds = new List<Guid> { new Guid(tenantId) };
     }
 
     /// <summary>
@@ -59,7 +58,7 @@ public class ListenController : Controller
     /// <returns>IActionResult</returns>
     [HttpPost]
     [AllowAnonymous]
-    public async Task<IActionResult> Index([FromQuery] string validationToken = null)
+    public async Task<IActionResult> Index([FromQuery] string? validationToken = null)
     {
         // If there is a validation token in the query string,
         // send it back in a 200 OK text/plain response
@@ -70,16 +69,18 @@ public class ListenController : Controller
 
         // Read the body
         using var reader = new StreamReader(Request.Body);
-        var jsonPayload = await reader.ReadToEndAsync();
 
         // Use the Graph client's serializer to deserialize the body
-        var notifications = _graphClient.HttpProvider.Serializer
-            .DeserializeObject<ChangeNotificationCollection>(jsonPayload);
+        var bodyStream = new MemoryStream();
+        await Request.Body.CopyToAsync(bodyStream);
+        bodyStream.Seek(0, SeekOrigin.Begin);
+        var parseNode = new JsonParseNodeFactory().GetRootParseNode("application/json", bodyStream);
+        var notifications = parseNode.GetObjectValue(ChangeNotificationCollection.CreateFromDiscriminatorValue);
 
-        if (notifications == null) return Ok();
+        if (notifications == null || notifications.Value == null) return Ok();
 
         // Validate any tokens in the payload
-        var areTokensValid = await AreTokensValid(notifications, _tenantIds, _appIds);
+        var areTokensValid = await notifications.AreTokensValid(_tenantIds, _appIds);
         if (!areTokensValid) return Unauthorized();
 
         // Process non-encrypted notifications first
@@ -89,16 +90,16 @@ public class ListenController : Controller
         {
             // Find the subscription in our store
             var subscription = _subscriptionStore
-                .GetSubscriptionRecord(notification.SubscriptionId.ToString());
+                .GetSubscriptionRecord(notification.SubscriptionId.ToString() ?? string.Empty);
 
-            // If this isn't a subscription we know about, or if client state doesnt' match,
+            // If this isn't a subscription we know about, or if client state doesn't match,
             // ignore it
             if (subscription != null && subscription.ClientState == notification.ClientState)
             {
                 _logger.LogInformation($"Received notification for: {notification.Resource}");
                 // Add notification to list to process. If there is more than
                 // one notification for a given resource, we'll only process it once
-                messageNotifications[notification.Resource] = notification;
+                messageNotifications[notification.Resource!] = notification;
             }
         }
 
@@ -111,16 +112,29 @@ public class ListenController : Controller
         foreach (var notification in notifications.Value.Where(n => n.EncryptedContent != null))
         {
             // Decrypt the encrypted payload using private key
-            var chatMessage = await notification.EncryptedContent.DecryptAsync<ChatMessage>((id, thumbprint) => {
-                return _certificateService.GetDecryptionCertificate();
-            });
-
-            // Add a SignalR notification for this message to the list
-            clientNotifications.Add(new ClientNotification(new
+            try
             {
-                Sender = chatMessage.From?.User?.DisplayName ?? "UNKNOWN",
-                Message = chatMessage.Body?.Content ?? ""
-            }));
+                var chatMessage = await notification.EncryptedContent!.DecryptAsync<ChatMessage>(async (id, thumbprint) =>
+                {
+                    var cert = await _certificateService.GetDecryptionCertificate();
+                    return cert;
+                });
+
+                // Add a SignalR notification for this message to the list
+                if (chatMessage != null)
+                {
+                    clientNotifications.Add(new ClientNotification(new
+                    {
+                        Sender = chatMessage.From?.User?.DisplayName ?? "UNKNOWN",
+                        Message = chatMessage.Body?.Content ?? ""
+                    }));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw;
+            }
         }
 
         // Send SignalR notifications
@@ -135,39 +149,6 @@ public class ListenController : Controller
     }
 
     /// <summary>
-    /// Validates tokens contained in a ChangeNotificationCollection
-    /// </summary>
-    /// <param name="notifications">The ChangeNotificationCollection to validate</param>
-    /// <param name="tenantIds">A list of expected tenant IDs</param>
-    /// <param name="appIds">A list of expected app IDs</param>
-    /// <returns>true if all tokens are valid, false if not</returns>
-    private async Task<bool> AreTokensValid(
-        ChangeNotificationCollection notifications,
-        List<Guid> tenantIds,
-        List<Guid> appIds)
-    {
-        // First validate assuming tokens are v2 tokens
-        bool areTokensValid = await notifications.AreTokensValidV2(tenantIds, appIds);
-
-        if (!areTokensValid)
-        {
-            // If v2 validation failed, try v1
-            // This method throws if validation fails, so catch any exception
-            // and treat as validation failure
-            try
-            {
-                areTokensValid = await notifications.AreTokensValid(tenantIds, appIds);
-            }
-            catch (Microsoft.IdentityModel.Tokens.SecurityTokenValidationException)
-            {
-                areTokensValid = false;
-            }
-        }
-
-        return areTokensValid;
-    }
-
-    /// <summary>
     /// Gets each message specified in a set of notifications
     /// </summary>
     /// <param name="notifications">A set of notifications for new messages</param>
@@ -178,9 +159,11 @@ public class ListenController : Controller
         foreach(var notification in notifications)
         {
             // Get the subscription from the store for user/tenant ID
-            var subscription = _subscriptionStore.GetSubscriptionRecord(notification.SubscriptionId.ToString());
+            var subscription = _subscriptionStore.GetSubscriptionRecord(notification.SubscriptionId.ToString() ?? string.Empty);
 
-            if (subscription != null && !string.IsNullOrEmpty(subscription.UserId))
+            if (subscription != null &&
+                !string.IsNullOrEmpty(subscription.UserId) &&
+                !string.IsNullOrEmpty(subscription.TenantId))
             {
                 // Since the POST comes from Graph, there's no user in the context
                 // Set the user to the user that owns the message. This will enable
@@ -192,18 +175,19 @@ public class ListenController : Controller
 
             // The notification has the relative URL to the message in the Resource
             // property, so build the request using that information
-            var request = new MessageRequest(
-                $"{_graphClient.BaseUrl}/{notification.Resource}",
-                _graphClient,
-                null);
+            var request = new Microsoft.Kiota.Abstractions.RequestInformation
+            {
+                HttpMethod = Microsoft.Kiota.Abstractions.Method.GET,
+                URI = new Uri($"{_graphClient.RequestAdapter.BaseUrl}/{notification.Resource}"),
+            };
 
-            var message = await request.GetAsync();
+            var message = await _graphClient.RequestAdapter.SendAsync(request, Message.CreateFromDiscriminatorValue);
 
             // Add a SignalR notification for the message
             clientNotifications.Add(new ClientNotification(new
             {
-                Subject = message.Subject ?? "",
-                Id = message.Id
+                Subject = message?.Subject ?? string.Empty,
+                Id = message?.Id ?? string.Empty,
             }));
         }
 

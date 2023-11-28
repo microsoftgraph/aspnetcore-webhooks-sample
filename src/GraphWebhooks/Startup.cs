@@ -1,19 +1,12 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Net;
-using System.Threading.Tasks;
 using GraphWebhooks.Services;
 using GraphWebhooks.SignalR;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -41,7 +34,7 @@ public class Startup
             .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
             // Specify this is a web app and needs auth code flow
             .AddMicrosoftIdentityWebApp(options => {
-                Configuration.Bind("AzureAd", options);
+                Configuration?.Bind("AzureAd", options);
 
                 options.Prompt = "select_account";
 
@@ -69,11 +62,11 @@ public class Startup
             // Add ability to call web API (Graph)
             // and get access tokens
             .EnableTokenAcquisitionToCallDownstreamApi(options => {
-                Configuration.Bind("AzureAd", options);
+                Configuration?.Bind("AzureAd", options);
             }, scopesArray)
             // Add a GraphServiceClient via dependency injection
             .AddMicrosoftGraph(options => {
-                options.Scopes = scopesString;
+                options.Scopes = scopesArray;
             })
             // Use in-memory token cache
             // See https://github.com/AzureAD/microsoft-identity-web/wiki/token-cache-serialization

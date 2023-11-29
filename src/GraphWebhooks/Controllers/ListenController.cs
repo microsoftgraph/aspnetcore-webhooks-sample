@@ -70,7 +70,7 @@ public class ListenController : Controller
         }
 
         // Use the Graph client's serializer to deserialize the body
-        var bodyStream = new MemoryStream();
+        using var bodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(bodyStream);
         bodyStream.Seek(0, SeekOrigin.Begin);
         var notifications = KiotaJsonSerializer.Deserialize<ChangeNotificationCollection>(bodyStream);

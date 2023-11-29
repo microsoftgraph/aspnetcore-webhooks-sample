@@ -11,7 +11,6 @@ using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Microsoft.Identity.Web;
 using Microsoft.Kiota.Abstractions.Serialization;
-using Microsoft.Kiota.Serialization.Json;
 
 namespace GraphWebhooks.Controllers;
 
@@ -70,16 +69,13 @@ public class ListenController : Controller
             return Ok(validationToken);
         }
 
-        // Read the body
-        using var reader = new StreamReader(Request.Body);
-
         // Use the Graph client's serializer to deserialize the body
         var bodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(bodyStream);
         bodyStream.Seek(0, SeekOrigin.Begin);
         var notifications = KiotaJsonSerializer.Deserialize<ChangeNotificationCollection>(bodyStream);
 
-        if (notifications == null || notifications.Value == null) return Ok();
+        if (notifications == null || notifications.Value == null) return Accepted();
 
         // Validate any tokens in the payload
         var areTokensValid = await notifications.AreTokensValid(_tenantIds, _appIds);

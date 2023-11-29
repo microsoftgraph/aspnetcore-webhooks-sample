@@ -80,6 +80,7 @@ public class WatchController : Controller
             {
                 ChangeType = "created",
                 NotificationUrl = $"{_notificationHost}/listen",
+                LifecycleNotificationUrl = $"{_notificationHost}/lifecycle",
                 Resource = "me/mailfolders/inbox/messages",
                 ClientState = Guid.NewGuid().ToString(),
                 IncludeResourceData = false,
@@ -145,6 +146,7 @@ public class WatchController : Controller
             {
                 ChangeType = "created",
                 NotificationUrl = $"{_notificationHost}/listen",
+                LifecycleNotificationUrl = $"{_notificationHost}/lifecycle",
                 Resource = "/teams/getAllMessages",
                 ClientState = Guid.NewGuid().ToString(),
                 IncludeResourceData = true,
@@ -219,9 +221,6 @@ public class WatchController : Controller
                 // Remove the subscription from the subscription store
                 _subscriptionStore.DeleteSubscriptionRecord(subscriptionId);
             }
-
-            // Redirect to Microsoft.Identity.Web's signout page
-            return RedirectToAction("SignOut", "Account", new { area = "MicrosoftIdentity" });
         }
         catch (Exception ex)
         {
@@ -229,11 +228,12 @@ public class WatchController : Controller
             // Microsoft.Identity.Web to challenge the user for re-auth or consent
             if (ex.InnerException is MicrosoftIdentityWebChallengeUserException) throw;
 
-            // Otherwise display the error
-            return RedirectToAction("Index", "Home")
-                .WithError($"Error deleting subscription: {ex.Message}",
-                    ex.ToString());
+            // Otherwise log the error
+            _logger.LogError(ex, "Error deleting subscription");
         }
+
+        // Redirect to Microsoft.Identity.Web's signout page
+        return RedirectToAction("SignOut", "Account", new { area = "MicrosoftIdentity" });
     }
 
     /// <summary>

@@ -13,6 +13,8 @@
       "program": "${workspaceFolder}/src/GraphWebhooks/bin/Debug/net8.0/GraphWebhooks.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/GraphWebhooks",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
       "stopAtEntry": false,
       // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
       "serverReadyAction": {

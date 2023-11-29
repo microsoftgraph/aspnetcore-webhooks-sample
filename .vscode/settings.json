@@ -5,11 +5,20 @@
   "cSpell.words": [
     "apponly",
     "appsettings",
+    "Decryptable",
+    "Decryptor",
+    "Encryptable",
+    "entra",
+    "HMACSHA",
     "HSTS",
     "mailfolders",
     "Msal",
+    "Multitenant",
+    "Oaep",
+    "PKCS",
     "signin",
     "signout",
+    "SYSLIB",
     "utid"
   ]
 }

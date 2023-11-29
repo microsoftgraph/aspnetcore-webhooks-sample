@@ -1,11 +1,8 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace GraphWebhooks;
 
@@ -19,12 +16,12 @@ public class WithAlertResult : IActionResult
     public IActionResult Result { get; }
     public string Type { get; }
     public string Message { get; }
-    public string DebugInfo { get; }
+    public string? DebugInfo { get; }
 
     public WithAlertResult(IActionResult result,
                                 string type,
                                 string message,
-                                string debugInfo)
+                                string? debugInfo)
     {
         Result = result;
         Type = type;
@@ -37,7 +34,8 @@ public class WithAlertResult : IActionResult
         _ = context ?? throw new ArgumentException(nameof(context));
 
         var factory = context.HttpContext.RequestServices
-        .GetService<ITempDataDictionaryFactory>();
+        .GetService<ITempDataDictionaryFactory>() ??
+            throw new Exception("Could not get ITempDataDictionaryFactory");
 
         var tempData = factory.GetTempData(context.HttpContext);
 

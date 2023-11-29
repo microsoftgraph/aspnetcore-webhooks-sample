@@ -1,14 +1,10 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.Security.KeyVault.Certificates;
 using Azure.Security.KeyVault.Secrets;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace GraphWebhooks.Services;
 
@@ -19,8 +15,8 @@ public class CertificateService
 {
     private readonly IConfiguration _config;
     private readonly ILogger<CertificateService> _logger;
-    private byte[] _publicKeyBytes = null;
-    private byte[] _privateKeyBytes = null;
+    private byte[]? _publicKeyBytes = null;
+    private byte[]? _privateKeyBytes = null;
 
     public CertificateService(
         IConfiguration configuration,
@@ -41,7 +37,8 @@ public class CertificateService
             await LoadCertificates();
         }
 
-        return new X509Certificate2(_publicKeyBytes);
+        return new X509Certificate2(_publicKeyBytes ??
+            throw new Exception("Could not load encryption certificate"));
     }
 
     /// <summary>
@@ -55,7 +52,8 @@ public class CertificateService
             await LoadCertificates();
         }
 
-        return new X509Certificate2(_privateKeyBytes);
+        return new X509Certificate2(_privateKeyBytes ??
+            throw new Exception("Could not load decryption certificate"));
     }
 
     /// <summary>
@@ -67,7 +65,8 @@ public class CertificateService
         var tenantId = _config.GetValue<string>("AzureAd:TenantId");
         var clientId = _config.GetValue<string>("AzureAd:ClientId");
         var clientSecret = _config.GetValue<string>("AzureAd:ClientSecret");
-        var keyVaultUrl = new Uri(_config.GetValue<string>("KeyVault:Url"));
+        var keyVaultUrl = new Uri(_config.GetValue<string>("KeyVault:Url") ??
+            throw new Exception("KeyVault url not set in appsettings"));
         var certificateName = _config.GetValue<string>("KeyVault:CertificateName");
 
         // Authenticate as the app to connect to Azure Key Vault

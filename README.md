@@ -52,10 +52,10 @@ This sample implements the following scenarios.
 
 To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the following:
 
-- [.NET 5.0](https://dotnet.microsoft.com/download) or later.
-- A [work, school or personal account](https://dev.office.com/devprogram). **Note:** Personal accounts cannot access the app-only Teams channel scenario in the app. A tenant administrator account is required to grant application permissions for the app-only portion.
+- [.NET 8.0](https://dotnet.microsoft.com/download) or later.
+- A [work, or school account](https://dev.office.com/devprogram). **Note:** The app-only Teams channel scenario in the sample requires a tenant administrator account to grant application permissions for the app-only portion.
 - The application ID and secret from the application that you [register on the Azure Portal](#create-the-app-registration).
-- A public HTTPS endpoint to receive and send HTTP requests. You can host this on Microsoft Azure or another service, or you can [use ngrok](#ngrok) or a similar tool while testing.
+- A public HTTPS endpoint to receive and send HTTP requests. You can host this on Microsoft Azure or another service, or you can [use ngrok](#set-up-the-ngrok-proxy-optional) or a similar tool while testing.
 - If you are also testing change notifications with resource data, you also need a Microsoft Azure subscription to create an Azure Key Vault. If you do not have a Microsoft Azure subscription, you can [start a free trial](https://azure.microsoft.com/free/).
 
 ### Create the app registration
@@ -139,7 +139,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 ## Configure and run the sample
 
-1. Expose a public HTTPS notification endpoint. It can run on a service such as Microsoft Azure, or you can create a proxy web server by [using ngrok](#ngrok) or a similar tool.
+1. Expose a public HTTPS notification endpoint. It can run on a service such as Microsoft Azure, or you can create a proxy web server by [using ngrok](#set-up-the-ngrok-proxy-optional) or a similar tool.
 
 1. Open **appsettings.json** in the root directory of the project.
 

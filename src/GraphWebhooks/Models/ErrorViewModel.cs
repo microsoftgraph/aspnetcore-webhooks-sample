@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
 namespace GraphWebhooks.Models;
@@ -8,7 +8,7 @@ namespace GraphWebhooks.Models;
 /// </summary>
 public class ErrorViewModel
 {
-    public string RequestId { get; set; }
+    public string? RequestId { get; set; }
 
     public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
 }

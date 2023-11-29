@@ -1,12 +1,8 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Protocols;
@@ -34,14 +30,15 @@ public static class ChangeNotificationCollectionExtensions
     /// <param name="issuerPrefix">The prefix for valid issuers (Default: https://login.microsoftonline.com/)</param>
     /// <returns>true if all tokens are valid, false otherwise</returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static async Task<bool> AreTokensValidV2(
+    public static async Task<bool> AreTokensValid(
         this ChangeNotificationCollection collection,
         IEnumerable<Guid> tenantIds,
         IEnumerable<Guid> appIds,
         string wellKnownUri = "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration",
-        string issuerPrefix = "https://login.microsoftonline.com/")
+        IEnumerable<string>? issuerFormats = null)
     {
-        if ((collection.ValidationTokens == null || !collection.ValidationTokens.Any()) && collection.Value.All(x => x.EncryptedContent == null))
+        if ((collection.ValidationTokens == null || !collection.ValidationTokens.Any()) &&
+            (collection.Value == null || collection.Value.All(x => x.EncryptedContent == null)))
             return true;
 
         if (tenantIds == null || !tenantIds.Any())
@@ -49,17 +46,36 @@ public static class ChangeNotificationCollectionExtensions
         if (appIds == null || !appIds.Any())
             throw new ArgumentNullException(nameof(appIds));
 
+        if (issuerFormats == null || !issuerFormats.Any())
+        {
+            issuerFormats = new[]
+            {
+                "https://sts.windows.net/{0}/",
+                "https://login.microsoftonline.com/{0}/v2.0"
+            };
+        }
+
         var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
             wellKnownUri, new OpenIdConnectConfigurationRetriever());
 
         var openIdConfig = await configurationManager.GetConfigurationAsync();
         var handler = new JwtSecurityTokenHandler();
-        var issuersToValidate = tenantIds.Select(tid => $"{issuerPrefix}{tid}/v2.0");
         var appIdsToValidate = appIds.Select(appId => appId.ToString());
 
-        return collection.ValidationTokens
-            .Select(t => IsTokenValid(t, handler, openIdConfig, issuersToValidate, appIdsToValidate))
-            .Aggregate((x, y) => x && y);
+        foreach (var issuerFormat in issuerFormats)
+        {
+            var issuersToValidate = tenantIds.Select(tid => string.Format(issuerFormat, tid));
+            if (collection.ValidationTokens != null)
+            {
+                var result = collection.ValidationTokens
+                    .Select(t => IsTokenValid(t, handler, openIdConfig, issuersToValidate, appIdsToValidate))
+                    .Aggregate((x, y) => x && y);
+
+                if (result) return result;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

@@ -35,7 +35,7 @@ public class WatchController : Controller
         _ = configuration ?? throw new ArgumentException(nameof(configuration));
 
         _notificationHost = configuration.GetValue<string>("NotificationHost") is string hostValue &&
-            !string.IsNullOrEmpty(hostValue) && hostValue != "YOUR_NGROK_PROXY" ? hostValue :
+            !string.IsNullOrEmpty(hostValue) && !hostValue.Equals("YOUR_NGROK_PROXY", StringComparison.OrdinalIgnoreCase) ? hostValue :
             throw new ArgumentException("You must configure NotificationHost in appsettings.json");
     }
 
@@ -61,10 +61,16 @@ public class WatchController : Controller
             // Get the user from Microsoft Graph
             var user = await _graphClient.Me.GetAsync(req =>
             {
-                req.QueryParameters.Select = new[] { "displayName", "mail", "userPrincipalName" };
+                req.QueryParameters.Select = ["displayName", "mail", "userPrincipalName"];
             });
 
-            _logger.LogInformation($"Authenticated user: {user?.DisplayName} ({user?.Mail ?? user?.UserPrincipalName})");
+            if (user == null)
+            {
+                _logger.LogWarning("Could not retrieve authenticated user.");
+                return View().WithError("Could not retrieve authenticated user.");
+            }
+
+            _logger.LogInformation($"Authenticated user: {user.DisplayName} ({user.Mail ?? user.UserPrincipalName})");
             // Add the user's display name and email address to the user's
             // identity.
             User.AddUserGraphInfo(user);

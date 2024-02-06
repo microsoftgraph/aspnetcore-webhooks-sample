@@ -140,9 +140,7 @@ public class WatchController : Controller
             var encryptionCertificate = await _certificateService.GetEncryptionCertificate();
 
             // Create the subscription
-            // This should work with just the base Subscription object, blocked by bug:
-            // https://github.com/microsoftgraph/msgraph-sdk-dotnet/issues/2237
-            var subscription = new EncryptableSubscription
+            var subscription = new Subscription
             {
                 ChangeType = "created",
                 NotificationUrl = $"{_notificationHost}/listen",

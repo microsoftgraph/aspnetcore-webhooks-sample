@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Microsoft.Identity.Web;
+using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Serialization;
+using Microsoft.Kiota.Serialization.Json;
 
 namespace GraphWebhooks.Controllers;
 
@@ -51,6 +53,12 @@ public class LifecycleController : Controller
         using var bodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(bodyStream);
         bodyStream.Seek(0, SeekOrigin.Begin);
+
+        // Calling RegisterDefaultDeserializer here isn't strictly necessary since
+        // we have a GraphServiceClient instance. In cases where you do not have a
+        // GraphServiceClient, you need to register the JSON provider before trying
+        // to deserialize.
+        ApiClientBuilder.RegisterDefaultDeserializer<JsonParseNodeFactory>();
         var notifications = KiotaJsonSerializer.Deserialize<ChangeNotificationCollection>(bodyStream);
 
         if (notifications == null || notifications.Value == null) return Accepted();

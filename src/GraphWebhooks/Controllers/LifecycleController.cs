@@ -15,25 +15,27 @@ namespace GraphWebhooks.Controllers;
 
 /// <summary>
 /// Implements the lifecycle notification endpoint which receives
-/// notifications from Microsoft Graph
+/// notifications from Microsoft Graph.
 /// </summary>
 public class LifecycleController(
     GraphServiceClient graphClient,
     SubscriptionStore subscriptionStore,
     ILogger<LifecycleController> logger) : Controller
 {
-    private readonly GraphServiceClient _graphClient = graphClient ??
+    private readonly GraphServiceClient graphClient = graphClient ??
         throw new ArgumentException(nameof(graphClient));
-    private readonly SubscriptionStore _subscriptionStore = subscriptionStore ??
+
+    private readonly SubscriptionStore subscriptionStore = subscriptionStore ??
         throw new ArgumentException(nameof(subscriptionStore));
-    private readonly ILogger<LifecycleController> _logger = logger ??
+
+    private readonly ILogger<LifecycleController> logger = logger ??
         throw new ArgumentException(nameof(logger));
 
     /// <summary>
-    /// POST /lifecycle
+    /// POST /lifecycle.
     /// </summary>
-    /// <param name="validationToken">Optional. Validation token sent by Microsoft Graph during endpoint validation phase</param>
-    /// <returns>IActionResult</returns>
+    /// <param name="validationToken">Optional. Validation token sent by Microsoft Graph during endpoint validation phase.</param>
+    /// <returns>An <see cref="IActionResult"/>.</returns>
     [HttpPost]
     [AllowAnonymous]
     public async Task<IActionResult> Index([FromQuery] string? validationToken = null)
@@ -57,14 +59,19 @@ public class LifecycleController(
         ApiClientBuilder.RegisterDefaultDeserializer<JsonParseNodeFactory>();
         var notifications = KiotaJsonSerializer.Deserialize<ChangeNotificationCollection>(bodyStream);
 
-        if (notifications == null || notifications.Value == null) return Accepted();
+        if (notifications == null || notifications.Value == null)
+        {
+            return Accepted();
+        }
 
         // Process any lifecycle events
         var lifecycleNotifications = notifications.Value.Where(n => n.LifecycleEvent != null);
         foreach (var lifecycleNotification in lifecycleNotifications)
         {
-            _logger.LogInformation("Received {eventType} notification for subscription {subscriptionId}",
-                lifecycleNotification.LifecycleEvent.ToString(), lifecycleNotification.SubscriptionId);
+            logger.LogInformation(
+                "Received {eventType} notification for subscription {subscriptionId}",
+                lifecycleNotification.LifecycleEvent.ToString(),
+                lifecycleNotification.SubscriptionId);
 
             if (lifecycleNotification.LifecycleEvent == LifecycleEventType.ReauthorizationRequired)
             {
@@ -75,7 +82,7 @@ public class LifecycleController(
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error renewing subscription");
+                    logger.LogError(ex, "Error renewing subscription");
                 }
             }
         }
@@ -91,7 +98,7 @@ public class LifecycleController(
 
         if (!string.IsNullOrEmpty(subscriptionId))
         {
-            var subscription = _subscriptionStore.GetSubscriptionRecord(subscriptionId);
+            var subscription = subscriptionStore.GetSubscriptionRecord(subscriptionId);
             if (subscription != null &&
                 !string.IsNullOrEmpty(subscription.UserId) &&
                 !string.IsNullOrEmpty(subscription.TenantId))
@@ -112,13 +119,13 @@ public class LifecycleController(
                     ExpirationDateTime = DateTimeOffset.UtcNow.AddHours(1),
                 };
 
-                await _graphClient.Subscriptions[subscriptionId]
+                await graphClient.Subscriptions[subscriptionId]
                     .PatchAsync(update, req =>
                     {
                         req.Options.WithAppOnly(isAppOnly);
                     });
 
-                _logger.LogInformation("Renewed subscription");
+                logger.LogInformation("Renewed subscription");
             }
         }
     }

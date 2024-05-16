@@ -17,21 +17,17 @@ namespace GraphWebhooks.Controllers;
 /// Implements the lifecycle notification endpoint which receives
 /// notifications from Microsoft Graph
 /// </summary>
-public class LifecycleController : Controller
+public class LifecycleController(
+    GraphServiceClient graphClient,
+    SubscriptionStore subscriptionStore,
+    ILogger<LifecycleController> logger) : Controller
 {
-    private readonly GraphServiceClient _graphClient;
-    private readonly SubscriptionStore _subscriptionStore;
-    private readonly ILogger<LifecycleController> _logger;
-
-    public LifecycleController(
-        GraphServiceClient graphClient,
-        SubscriptionStore subscriptionStore,
-        ILogger<LifecycleController> logger)
-    {
-        _graphClient = graphClient ?? throw new ArgumentException(nameof(graphClient));
-        _subscriptionStore = subscriptionStore ?? throw new ArgumentException(nameof(subscriptionStore));
-        _logger = logger ?? throw new ArgumentException(nameof(logger));
-    }
+    private readonly GraphServiceClient _graphClient = graphClient ??
+        throw new ArgumentException(nameof(graphClient));
+    private readonly SubscriptionStore _subscriptionStore = subscriptionStore ??
+        throw new ArgumentException(nameof(subscriptionStore));
+    private readonly ILogger<LifecycleController> _logger = logger ??
+        throw new ArgumentException(nameof(logger));
 
     /// <summary>
     /// POST /lifecycle

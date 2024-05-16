@@ -28,11 +28,16 @@ public class WatchController : Controller
         ILogger<WatchController> logger,
         IConfiguration configuration)
     {
-        _graphClient = graphClient ?? throw new ArgumentException(nameof(graphClient));
-        _subscriptionStore = subscriptionStore ?? throw new ArgumentException(nameof(subscriptionStore));
-        _certificateService = certificateService ?? throw new ArgumentException(nameof(certificateService));
-        _logger = logger ?? throw new ArgumentException(nameof(logger));
-        _ = configuration ?? throw new ArgumentException(nameof(configuration));
+        _graphClient = graphClient ??
+            throw new ArgumentException("GraphServiceClient cannot be null", nameof(graphClient));
+        _subscriptionStore = subscriptionStore ??
+            throw new ArgumentException("SubscriptionStore cannot be null", nameof(subscriptionStore));
+        _certificateService = certificateService ??
+            throw new ArgumentException("CertificateService cannot be null", nameof(certificateService));
+        _logger = logger ??
+            throw new ArgumentException("ILogger cannot be null", nameof(logger));
+        _ = configuration ??
+            throw new ArgumentException("IConfiguration cannot be null", nameof(configuration));
 
         _notificationHost = configuration.GetValue<string>("NotificationHost") is string hostValue &&
             !string.IsNullOrEmpty(hostValue) && !hostValue.Equals("YOUR_NGROK_PROXY", StringComparison.OrdinalIgnoreCase) ? hostValue :
@@ -55,7 +60,7 @@ public class WatchController : Controller
 
             // Get the user's ID and tenant ID from the user's identity
             var userId = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
-            _logger.LogInformation($"Authenticated user ID {userId}");
+            _logger.LogInformation("Authenticated user ID {userId}", userId);
             var tenantId = User.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
 
             // Get the user from Microsoft Graph
@@ -70,7 +75,10 @@ public class WatchController : Controller
                 return View().WithError("Could not retrieve authenticated user.");
             }
 
-            _logger.LogInformation($"Authenticated user: {user.DisplayName} ({user.Mail ?? user.UserPrincipalName})");
+            _logger.LogInformation(
+                "Authenticated user: {displayName} ({email})",
+                user.DisplayName,
+                user.Mail ?? user.UserPrincipalName);
             // Add the user's display name and email address to the user's
             // identity.
             User.AddUserGraphInfo(user);
@@ -249,7 +257,7 @@ public class WatchController : Controller
                     req.Options.WithAppOnly(appOnly);
                 });
 
-            foreach(var subscription in subscriptions?.Value ?? new List<Subscription>())
+            foreach(var subscription in subscriptions?.Value ?? [])
             {
                 // Delete the subscription
                 await _graphClient.Subscriptions[subscription.Id]

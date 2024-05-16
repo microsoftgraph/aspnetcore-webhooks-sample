@@ -9,14 +9,10 @@ namespace GraphWebhooks.Services;
 /// <summary>
 /// Implements an in-memory store of subscriptions
 /// </summary>
-public class SubscriptionStore
+public class SubscriptionStore(IMemoryCache memoryCache)
 {
-    private readonly IMemoryCache _cache;
-
-    public SubscriptionStore(IMemoryCache memoryCache)
-    {
-        _cache = memoryCache ?? throw new ArgumentException(nameof(memoryCache));
-    }
+    private readonly IMemoryCache _cache = memoryCache ??
+        throw new ArgumentException(nameof(memoryCache));
 
     /// <summary>
     /// Add a subscription record to the store

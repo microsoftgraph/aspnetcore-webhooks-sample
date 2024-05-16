@@ -31,7 +31,7 @@ public static class AlertExtensions
         return Alert(result, "info", message, debugInfo);
     }
 
-    private static IActionResult Alert(IActionResult result,
+    private static WithAlertResult Alert(IActionResult result,
                                         string type,
                                         string message,
                                         string? debugInfo)

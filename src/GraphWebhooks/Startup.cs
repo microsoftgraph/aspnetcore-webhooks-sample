@@ -13,19 +13,15 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace GraphWebhooks;
 
-public class Startup
+public class Startup(IConfiguration configuration)
 {
-    public Startup(IConfiguration configuration)
-    {
-        Configuration = configuration ?? throw new ArgumentException(nameof(configuration));
-    }
-
-    public IConfiguration Configuration { get; }
+    public IConfiguration Configuration { get; } = configuration ??
+        throw new ArgumentException(nameof(configuration));
 
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        _ = services ?? throw new ArgumentException(nameof(services));
+        _ = services ?? throw new ArgumentException("Service collection cannot be null", nameof(services));
 
         var scopesString = Configuration?.GetValue<string>("GraphScopes") ?? "User.Read";
         var scopesArray = scopesString.Split(' ');
@@ -94,8 +90,8 @@ public class Startup
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
-        _ = app ?? throw new ArgumentException(nameof(app));
-        _ = env ?? throw new ArgumentException(nameof(env));
+        _ = app ?? throw new ArgumentException("IApplicationBuilder cannot be null", nameof(app));
+        _ = env ?? throw new ArgumentException("IWebHostEnvironment cannot be null", nameof(env));
 
         if (env.IsDevelopment())
         {

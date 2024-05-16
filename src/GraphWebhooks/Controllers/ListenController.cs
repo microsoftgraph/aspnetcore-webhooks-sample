@@ -38,12 +38,18 @@ public class ListenController : Controller
         IConfiguration configuration,
         ILogger<ListenController> logger)
     {
-        _graphClient = graphClient ?? throw new ArgumentException(nameof(graphClient));
-        _subscriptionStore = subscriptionStore ?? throw new ArgumentException(nameof(subscriptionStore));
-        _certificateService = certificateService ?? throw new ArgumentException(nameof(certificateService));
-        _hubContext = hubContext ?? throw new ArgumentException(nameof(hubContext));
-        _logger = logger ?? throw new ArgumentException(nameof(logger));
-        _ = configuration ?? throw new ArgumentException(nameof(configuration));
+        _graphClient = graphClient ??
+            throw new ArgumentException("GraphServiceClient cannot be null", nameof(graphClient));
+        _subscriptionStore = subscriptionStore ??
+            throw new ArgumentException("SubscriptionStore cannot be null", nameof(subscriptionStore));
+        _certificateService = certificateService ??
+            throw new ArgumentException("CertificateService cannot be null", nameof(certificateService));
+        _hubContext = hubContext ??
+            throw new ArgumentException("IHubContext cannot be null", nameof(hubContext));
+        _logger = logger ??
+            throw new ArgumentException("ILogger cannot be null", nameof(logger));
+        _ = configuration ??
+            throw new ArgumentException("IConfiguration cannot be null", nameof(configuration));
 
         var appId = configuration.GetValue<string>("AzureAd:ClientId") is string appIdValue &&
             !string.IsNullOrEmpty(appIdValue) ? appIdValue :
@@ -51,8 +57,8 @@ public class ListenController : Controller
         var tenantId = configuration.GetValue<string>("AzureAd:TenantId") is string tenantIdValue &&
             !string.IsNullOrEmpty(tenantIdValue) ? tenantIdValue :
             throw new Exception("AzureAd:TenantId missing in app settings");
-        _appIds = new List<Guid> { new Guid(appId) };
-        _tenantIds = new List<Guid> { new Guid(tenantId) };
+        _appIds = [new Guid(appId)];
+        _tenantIds = [new Guid(tenantId)];
     }
 
     /// <summary>
@@ -102,7 +108,7 @@ public class ListenController : Controller
             // ignore it
             if (subscription != null && subscription.ClientState == notification.ClientState)
             {
-                _logger.LogInformation($"Received notification for: {notification.Resource}");
+                _logger.LogInformation("Received notification for: {resource}", notification.Resource);
                 // Add notification to list to process. If there is more than
                 // one notification for a given resource, we'll only process it once
                 messageNotifications[notification.Resource!] = notification;
@@ -138,7 +144,7 @@ public class ListenController : Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogError(ex, "{message}", ex.Message);
                 throw;
             }
         }
@@ -181,9 +187,9 @@ public class ListenController : Controller
 
             // The notification has the relative URL to the message in the Resource
             // property, so build the request using that information
-            var request = new Microsoft.Kiota.Abstractions.RequestInformation
+            var request = new RequestInformation
             {
-                HttpMethod = Microsoft.Kiota.Abstractions.Method.GET,
+                HttpMethod = Method.GET,
                 URI = new Uri($"{_graphClient.RequestAdapter.BaseUrl}/{notification.Resource}"),
             };
 

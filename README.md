@@ -26,7 +26,7 @@ extensions:
 
 ![.NET Core](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/workflows/.NET%20Core/badge.svg?branch=main)
 
-Subscribe for [Microsoft Graph change notifications](https://docs.microsoft.com/graph/api/resources/webhooks) to be notified when your user's data changes, so you don't have to poll for changes.
+Subscribe for [Microsoft Graph change notifications](https://learn.microsoft.com/graph/api/resources/change-notifications-api-overview) to be notified when your user's data changes, so you don't have to poll for changes.
 
 This sample ASP.NET Core web application shows how to subscribe for change notifications as well as how to validate and decrypt change notifications with resource data when supported by the resource.
 
@@ -42,16 +42,16 @@ This sample implements the following scenarios.
 - Uses user-delegated authentication to subscribe to notifications in a user's Exchange Online inbox.
 - Uses app-only authentication to subscribe to notifications for all new Teams channel messages. These notifications include encrypted resource data.
 
-[User-delegated authentication](https://docs.microsoft.com/graph/auth-v2-user) represents a user and the application being used when calling the Microsoft Graph. This type of authentication is best suited for scenarios when the user interacts with the application. [Application only authentication](https://docs.microsoft.com/graph/auth-v2-service) represents only the application itself when calling the Microsoft Graph, without any notion of user. This type of authentication is best suited for background services, daemons or other kind of applications users are not directly interacting with.
+[User-delegated authentication](https://learn.microsoft.com/graph/auth-v2-user) represents a user and the application being used when calling the Microsoft Graph. This type of authentication is best suited for scenarios when the user interacts with the application. [Application only authentication](https://learn.microsoft.com/graph/auth-v2-service) represents only the application itself when calling the Microsoft Graph, without any notion of user. This type of authentication is best suited for background services, daemons or other kind of applications users are not directly interacting with.
 
-> See the list of [permissions and authentication types](https://docs.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
+> See the list of [permissions and authentication types](https://learn.microsoft.com/graph/api/subscription-post-subscriptions?view=graph-rest-1.0) permitted for each supported resource in Microsoft Graph.
 
 ### Prerequisites
 
 To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the following:
 
 - [.NET 8.0](https://dotnet.microsoft.com/download) or later.
-- A [work, or school account](https://dev.office.com/devprogram). **Note:** The app-only Teams channel scenario in the sample requires a tenant administrator account to grant application permissions for the app-only portion.
+- A [work, or school account](https://developer.microsoft.com/microsoft-365/dev-program). **Note:** The app-only Teams channel scenario in the sample requires a tenant administrator account to grant application permissions for the app-only portion.
 - The application ID and secret from the application that you [register on the Azure Portal](#create-the-app-registration).
 - A public HTTPS endpoint to receive and send HTTP requests. You can host this on Microsoft Azure or another service, or you can [use ngrok](#set-up-the-ngrok-proxy-optional) or a similar tool while testing.
 - If you are also testing change notifications with resource data, you also need a Microsoft Azure subscription to create an Azure Key Vault. If you do not have a Microsoft Azure subscription, you can [start a free trial](https://azure.microsoft.com/free/).
@@ -67,9 +67,7 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 
 #### Register the app
 
-1. Select **Azure Active Directory** in the left-hand navigation, then select [App registrations](https://go.microsoft.com/fwlink/?linkid=2083908) under **Manage**.
-
-    ![A screenshot of the App registrations ](images/aad-portal-app-registrations.png)
+1. Select **Microsoft Entra ID** in the left-hand navigation, then select [App registrations](https://go.microsoft.com/fwlink/?linkid=2083908) under **Manage**.
 
 1. Select **New registration**. On the **Register an application** page, set the values as follows.
 
@@ -99,7 +97,7 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 
 1. Select **Application permissions**, then find and enable the **ChannelMessage.Read.All** permission. Select **Add permissions** to add the enabled permission.
 
-    > **Note:** To create subscriptions for other resources you need to select different permissions as documented [here](https://docs.microsoft.com/graph/api/subscription-post-subscriptions#permissions)
+    > **Note:** To create subscriptions for other resources you need to select different permissions as documented [here](https://learn.microsoft.com/graph/api/subscription-post-subscriptions#permissions)
 
 1. In the **Configured permissions** list, select the ellipses (`...`) in the **User.Read** row, and select **Remove permission**. The **User.Read** permission will be requested dynamically as part of the user sign-in process.
 
@@ -109,7 +107,8 @@ To use the Microsoft Graph Webhook Sample for ASP.NET Core, you need the followi
 
 ### Setting up Azure Key Vault
 
-*Note: The app-only scenario in this sample requires this step. It assumes that the public/private key pair for encrypting and decrypting resource data in the notification payloads are stored in Azure Key Vault. Refer to [the documentation](https://docs.microsoft.com/graph/api/resources/webhooks?view=graph-rest-beta) for a complete list of resources that support including resources data.*
+> [!NOTE]
+> The app-only scenario in this sample requires this step. It assumes that the public/private key pair for encrypting and decrypting resource data in the notification payloads are stored in Azure Key Vault. Refer to [the documentation](https://learn.microsoft.com/graph/api/resources/change-notifications-api-overview) for a complete list of resources that support including resources data.
 
 Follow the [documented steps](./KEYVAULT.md) to configure your Azure KeyVault in order to add support for change notifications with resource data.
 
@@ -141,7 +140,7 @@ Keep the console open while testing. If you close it, the tunnel also closes and
 
 1. Open **appsettings.json** in the root directory of the project.
 
-    > **Note:** During development, it's recommended that you use the [.NET Secret Manager](https://docs.microsoft.com/aspnet/core/security/app-secrets?view=aspnetcore-5.0&tabs=windows#secret-manager) to store secrets instead of putting them in appsettings.json.
+    > **Note:** During development, it's recommended that you use the [.NET Secret Manager](https://learn.microsoft.com/aspnet/core/security/app-secrets#secret-manager) to store secrets instead of putting them in appsettings.json.
 
     - Settings under **AzureAd**:
         - **TenantId**: Your tenant ID (obtained when registering the application)
@@ -197,12 +196,12 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 We'd love to get your feedback about the Microsoft Graph Webhooks sample for ASP.NET Core. You can send your questions and suggestions to us in the [Issues](https://github.com/microsoftgraph/aspnetcore-webhooks-sample/issues) section of this repository.
 
-Questions about Microsoft Graph in general should be posted to [Microsoft Q&A](https://docs.microsoft.com/answers/products/graph). Make sure that your questions or comments are tagged with the relevant Microsoft Graph tag.
+Questions about Microsoft Graph in general should be posted to [Microsoft Q&A](https://learn.microsoft.com/answers/products/graph). Make sure that your questions or comments are tagged with the relevant Microsoft Graph tag.
 
 ## Additional resources
 
 - [Microsoft Graph Webhooks sample for Node.js](https://github.com/microsoftgraph/nodejs-webhooks-sample)
 - [Microsoft Graph Webhooks sample for Java Spring](https://github.com/microsoftgraph/java-spring-webhooks-sample)
-- [Working with Webhooks in Microsoft Graph](https://docs.microsoft.com/graph/api/resources/webhooks)
-- [Subscription resource](https://docs.microsoft.com/graph/api/resources/subscription)
-- [Microsoft Graph documentation](https://docs.microsoft.com/graph)
+- [Working with Webhooks in Microsoft Graph](https://learn.microsoft.com/graph/api/resources/change-notifications-api-overview)
+- [Subscription resource](https://learn.microsoft.com/graph/api/resources/subscription)
+- [Microsoft Graph documentation](https://learn.microsoft.com/graph)

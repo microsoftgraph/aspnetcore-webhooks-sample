@@ -11,20 +11,16 @@ namespace GraphWebhooks.Services;
 /// <summary>
 /// Implements methods to retrieve certificates from Azure Key Vault
 /// </summary>
-public class CertificateService
+public class CertificateService(
+    IConfiguration configuration,
+    ILogger<CertificateService> logger)
 {
-    private readonly IConfiguration _config;
-    private readonly ILogger<CertificateService> _logger;
+    private readonly IConfiguration _config = configuration ??
+        throw new ArgumentException(nameof(configuration));
+    private readonly ILogger<CertificateService> _logger = logger ??
+        throw new ArgumentException(nameof(logger));
     private byte[]? _publicKeyBytes = null;
     private byte[]? _privateKeyBytes = null;
-
-    public CertificateService(
-        IConfiguration configuration,
-        ILogger<CertificateService> logger)
-    {
-        _config = configuration ?? throw new ArgumentException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentException(nameof(logger));
-    }
 
     /// <summary>
     /// Gets the configured public key from the Azure Key Vault

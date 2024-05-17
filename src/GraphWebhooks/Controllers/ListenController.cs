@@ -10,24 +10,37 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Microsoft.Identity.Web;
+using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Serialization;
+using Microsoft.Kiota.Serialization.Json;
 
 namespace GraphWebhooks.Controllers;
 
 /// <summary>
 /// Implements the notification endpoint which receives
-/// notifications from Microsoft Graph
+/// notifications from Microsoft Graph.
 /// </summary>
 public class ListenController : Controller
 {
-    private readonly GraphServiceClient _graphClient;
-    private readonly SubscriptionStore _subscriptionStore;
-    private readonly CertificateService _certificateService;
-    private readonly IHubContext<NotificationHub> _hubContext;
-    private readonly ILogger<ListenController> _logger;
-    private readonly List<Guid> _appIds;
-    private readonly List<Guid> _tenantIds;
+    private readonly GraphServiceClient graphClient;
+    private readonly SubscriptionStore subscriptionStore;
+    private readonly CertificateService certificateService;
+    private readonly IHubContext<NotificationHub> hubContext;
+    private readonly ILogger<ListenController> logger;
+    private readonly List<Guid> appIds;
+    private readonly List<Guid> tenantIds;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ListenController"/> class.
+    /// </summary>
+    /// <param name="graphClient">The <see cref="GraphServiceClient"/>.</param>
+    /// <param name="subscriptionStore">The subscription store.</param>
+    /// <param name="certificateService">The certificate service.</param>
+    /// <param name="hubContext">The SignalR hub context.</param>
+    /// <param name="configuration">The app configuration.</param>
+    /// <param name="logger">The logger.</param>
+    /// <exception cref="ArgumentException">Thrown if any parameter is null.</exception>
+    /// <exception cref="Exception">Thrown if configuration values are missing.</exception>
     public ListenController(
         GraphServiceClient graphClient,
         SubscriptionStore subscriptionStore,
@@ -36,12 +49,18 @@ public class ListenController : Controller
         IConfiguration configuration,
         ILogger<ListenController> logger)
     {
-        _graphClient = graphClient ?? throw new ArgumentException(nameof(graphClient));
-        _subscriptionStore = subscriptionStore ?? throw new ArgumentException(nameof(subscriptionStore));
-        _certificateService = certificateService ?? throw new ArgumentException(nameof(certificateService));
-        _hubContext = hubContext ?? throw new ArgumentException(nameof(hubContext));
-        _logger = logger ?? throw new ArgumentException(nameof(logger));
-        _ = configuration ?? throw new ArgumentException(nameof(configuration));
+        this.graphClient = graphClient ??
+            throw new ArgumentException("GraphServiceClient cannot be null", nameof(graphClient));
+        this.subscriptionStore = subscriptionStore ??
+            throw new ArgumentException("SubscriptionStore cannot be null", nameof(subscriptionStore));
+        this.certificateService = certificateService ??
+            throw new ArgumentException("CertificateService cannot be null", nameof(certificateService));
+        this.hubContext = hubContext ??
+            throw new ArgumentException("IHubContext cannot be null", nameof(hubContext));
+        this.logger = logger ??
+            throw new ArgumentException("ILogger cannot be null", nameof(logger));
+        _ = configuration ??
+            throw new ArgumentException("IConfiguration cannot be null", nameof(configuration));
 
         var appId = configuration.GetValue<string>("AzureAd:ClientId") is string appIdValue &&
             !string.IsNullOrEmpty(appIdValue) ? appIdValue :
@@ -49,15 +68,15 @@ public class ListenController : Controller
         var tenantId = configuration.GetValue<string>("AzureAd:TenantId") is string tenantIdValue &&
             !string.IsNullOrEmpty(tenantIdValue) ? tenantIdValue :
             throw new Exception("AzureAd:TenantId missing in app settings");
-        _appIds = new List<Guid> { new Guid(appId) };
-        _tenantIds = new List<Guid> { new Guid(tenantId) };
+        appIds = [new Guid(appId)];
+        tenantIds = [new Guid(tenantId)];
     }
 
     /// <summary>
-    /// POST /listen
+    /// POST /listen.
     /// </summary>
-    /// <param name="validationToken">Optional. Validation token sent by Microsoft Graph during endpoint validation phase</param>
-    /// <returns>IActionResult</returns>
+    /// <param name="validationToken">Optional. Validation token sent by Microsoft Graph during endpoint validation phase.</param>
+    /// <returns>An <see cref="IActionResult"/>.</returns>
     [HttpPost]
     [AllowAnonymous]
     public async Task<IActionResult> Index([FromQuery] string? validationToken = null)
@@ -73,13 +92,25 @@ public class ListenController : Controller
         using var bodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(bodyStream);
         bodyStream.Seek(0, SeekOrigin.Begin);
+
+        // Calling RegisterDefaultDeserializer here isn't strictly necessary since
+        // we have a GraphServiceClient instance. In cases where you do not have a
+        // GraphServiceClient, you need to register the JSON provider before trying
+        // to deserialize.
+        ApiClientBuilder.RegisterDefaultDeserializer<JsonParseNodeFactory>();
         var notifications = KiotaJsonSerializer.Deserialize<ChangeNotificationCollection>(bodyStream);
 
-        if (notifications == null || notifications.Value == null) return Accepted();
+        if (notifications == null || notifications.Value == null)
+        {
+            return Accepted();
+        }
 
         // Validate any tokens in the payload
-        var areTokensValid = await notifications.AreTokensValid(_tenantIds, _appIds);
-        if (!areTokensValid) return Unauthorized();
+        var areTokensValid = await notifications.AreTokensValid(tenantIds, appIds);
+        if (!areTokensValid)
+        {
+            return Unauthorized();
+        }
 
         // Process non-encrypted notifications first
         // These will be notifications for user mailbox
@@ -87,14 +118,15 @@ public class ListenController : Controller
         foreach (var notification in notifications.Value.Where(n => n.EncryptedContent == null))
         {
             // Find the subscription in our store
-            var subscription = _subscriptionStore
+            var subscription = subscriptionStore
                 .GetSubscriptionRecord(notification.SubscriptionId.ToString() ?? string.Empty);
 
             // If this isn't a subscription we know about, or if client state doesn't match,
             // ignore it
             if (subscription != null && subscription.ClientState == notification.ClientState)
             {
-                _logger.LogInformation($"Received notification for: {notification.Resource}");
+                logger.LogInformation("Received notification for: {resource}", notification.Resource);
+
                 // Add notification to list to process. If there is more than
                 // one notification for a given resource, we'll only process it once
                 messageNotifications[notification.Resource!] = notification;
@@ -114,7 +146,7 @@ public class ListenController : Controller
             {
                 var chatMessage = await notification.EncryptedContent!.DecryptAsync<ChatMessage>(async (id, thumbprint) =>
                 {
-                    var cert = await _certificateService.GetDecryptionCertificate();
+                    var cert = await certificateService.GetDecryptionCertificate();
                     return cert;
                 });
 
@@ -124,13 +156,13 @@ public class ListenController : Controller
                     clientNotifications.Add(new ClientNotification(new
                     {
                         Sender = chatMessage.From?.User?.DisplayName ?? "UNKNOWN",
-                        Message = chatMessage.Body?.Content ?? ""
+                        Message = chatMessage.Body?.Content ?? string.Empty,
                     }));
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                logger.LogError(ex, "{message}", ex.Message);
                 throw;
             }
         }
@@ -138,7 +170,7 @@ public class ListenController : Controller
         // Send SignalR notifications
         if (clientNotifications.Count > 0)
         {
-            await _hubContext.Clients.All.SendAsync("showNotification", clientNotifications);
+            await hubContext.Clients.All.SendAsync("showNotification", clientNotifications);
         }
 
         // Return 202 to Graph to confirm receipt of notification.
@@ -147,17 +179,17 @@ public class ListenController : Controller
     }
 
     /// <summary>
-    /// Gets each message specified in a set of notifications
+    /// Gets each message specified in a set of notifications.
     /// </summary>
-    /// <param name="notifications">A set of notifications for new messages</param>
+    /// <param name="notifications">A set of notifications for new messages.</param>
     private async Task GetMessagesAsync(IEnumerable<ChangeNotification> notifications)
     {
         var clientNotifications = new List<ClientNotification>();
 
-        foreach(var notification in notifications)
+        foreach (var notification in notifications)
         {
             // Get the subscription from the store for user/tenant ID
-            var subscription = _subscriptionStore.GetSubscriptionRecord(notification.SubscriptionId.ToString() ?? string.Empty);
+            var subscription = subscriptionStore.GetSubscriptionRecord(notification.SubscriptionId.ToString() ?? string.Empty);
 
             if (subscription != null &&
                 !string.IsNullOrEmpty(subscription.UserId) &&
@@ -173,13 +205,13 @@ public class ListenController : Controller
 
             // The notification has the relative URL to the message in the Resource
             // property, so build the request using that information
-            var request = new Microsoft.Kiota.Abstractions.RequestInformation
+            var request = new RequestInformation
             {
-                HttpMethod = Microsoft.Kiota.Abstractions.Method.GET,
-                URI = new Uri($"{_graphClient.RequestAdapter.BaseUrl}/{notification.Resource}"),
+                HttpMethod = Method.GET,
+                URI = new Uri($"{graphClient.RequestAdapter.BaseUrl}/{notification.Resource}"),
             };
 
-            var message = await _graphClient.RequestAdapter.SendAsync(request, Message.CreateFromDiscriminatorValue);
+            var message = await graphClient.RequestAdapter.SendAsync(request, Message.CreateFromDiscriminatorValue);
 
             // Add a SignalR notification for the message
             clientNotifications.Add(new ClientNotification(new
@@ -192,7 +224,7 @@ public class ListenController : Controller
         // Send SignalR notifications
         if (clientNotifications.Count > 0)
         {
-            await _hubContext.Clients.All.SendAsync("showNotification", clientNotifications);
+            await hubContext.Clients.All.SendAsync("showNotification", clientNotifications);
         }
     }
 }

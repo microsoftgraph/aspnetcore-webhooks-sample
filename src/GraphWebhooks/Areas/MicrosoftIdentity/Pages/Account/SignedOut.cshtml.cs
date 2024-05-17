@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
+// Licensed under the MIT license.
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +10,10 @@ namespace GraphWebhooks.Areas.MicrosoftIdentity.Pages.Account;
 /// <summary>
 /// Model for the SignOut page. Overrides the SignedOut.cshtml
 /// page exported by Microsoft.Identity.Web.UI
-/// to allow redirecting to home page even if not authenticated
+/// to allow redirecting to home page even if not authenticated.
 /// </summary>
 [AllowAnonymous]
-public class SignedOutModel : PageModel
+public class SignedOut : PageModel
 {
     /// <summary>
     /// Method handling the HTTP GET method.

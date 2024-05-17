@@ -7,35 +7,35 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Microsoft.Identity.Web;
+using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Serialization;
+using Microsoft.Kiota.Serialization.Json;
 
 namespace GraphWebhooks.Controllers;
 
 /// <summary>
 /// Implements the lifecycle notification endpoint which receives
-/// notifications from Microsoft Graph
+/// notifications from Microsoft Graph.
 /// </summary>
-public class LifecycleController : Controller
+public class LifecycleController(
+    GraphServiceClient graphClient,
+    SubscriptionStore subscriptionStore,
+    ILogger<LifecycleController> logger) : Controller
 {
-    private readonly GraphServiceClient _graphClient;
-    private readonly SubscriptionStore _subscriptionStore;
-    private readonly ILogger<LifecycleController> _logger;
+    private readonly GraphServiceClient graphClient = graphClient ??
+        throw new ArgumentException(nameof(graphClient));
 
-    public LifecycleController(
-        GraphServiceClient graphClient,
-        SubscriptionStore subscriptionStore,
-        ILogger<LifecycleController> logger)
-    {
-        _graphClient = graphClient ?? throw new ArgumentException(nameof(graphClient));
-        _subscriptionStore = subscriptionStore ?? throw new ArgumentException(nameof(subscriptionStore));
-        _logger = logger ?? throw new ArgumentException(nameof(logger));
-    }
+    private readonly SubscriptionStore subscriptionStore = subscriptionStore ??
+        throw new ArgumentException(nameof(subscriptionStore));
+
+    private readonly ILogger<LifecycleController> logger = logger ??
+        throw new ArgumentException(nameof(logger));
 
     /// <summary>
-    /// POST /lifecycle
+    /// POST /lifecycle.
     /// </summary>
-    /// <param name="validationToken">Optional. Validation token sent by Microsoft Graph during endpoint validation phase</param>
-    /// <returns>IActionResult</returns>
+    /// <param name="validationToken">Optional. Validation token sent by Microsoft Graph during endpoint validation phase.</param>
+    /// <returns>An <see cref="IActionResult"/>.</returns>
     [HttpPost]
     [AllowAnonymous]
     public async Task<IActionResult> Index([FromQuery] string? validationToken = null)
@@ -51,16 +51,27 @@ public class LifecycleController : Controller
         using var bodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(bodyStream);
         bodyStream.Seek(0, SeekOrigin.Begin);
+
+        // Calling RegisterDefaultDeserializer here isn't strictly necessary since
+        // we have a GraphServiceClient instance. In cases where you do not have a
+        // GraphServiceClient, you need to register the JSON provider before trying
+        // to deserialize.
+        ApiClientBuilder.RegisterDefaultDeserializer<JsonParseNodeFactory>();
         var notifications = KiotaJsonSerializer.Deserialize<ChangeNotificationCollection>(bodyStream);
 
-        if (notifications == null || notifications.Value == null) return Accepted();
+        if (notifications == null || notifications.Value == null)
+        {
+            return Accepted();
+        }
 
         // Process any lifecycle events
         var lifecycleNotifications = notifications.Value.Where(n => n.LifecycleEvent != null);
         foreach (var lifecycleNotification in lifecycleNotifications)
         {
-            _logger.LogInformation("Received {eventType} notification for subscription {subscriptionId}",
-                lifecycleNotification.LifecycleEvent.ToString(), lifecycleNotification.SubscriptionId);
+            logger.LogInformation(
+                "Received {eventType} notification for subscription {subscriptionId}",
+                lifecycleNotification.LifecycleEvent.ToString(),
+                lifecycleNotification.SubscriptionId);
 
             if (lifecycleNotification.LifecycleEvent == LifecycleEventType.ReauthorizationRequired)
             {
@@ -71,7 +82,7 @@ public class LifecycleController : Controller
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error renewing subscription");
+                    logger.LogError(ex, "Error renewing subscription");
                 }
             }
         }
@@ -87,7 +98,7 @@ public class LifecycleController : Controller
 
         if (!string.IsNullOrEmpty(subscriptionId))
         {
-            var subscription = _subscriptionStore.GetSubscriptionRecord(subscriptionId);
+            var subscription = subscriptionStore.GetSubscriptionRecord(subscriptionId);
             if (subscription != null &&
                 !string.IsNullOrEmpty(subscription.UserId) &&
                 !string.IsNullOrEmpty(subscription.TenantId))
@@ -108,13 +119,13 @@ public class LifecycleController : Controller
                     ExpirationDateTime = DateTimeOffset.UtcNow.AddHours(1),
                 };
 
-                await _graphClient.Subscriptions[subscriptionId]
+                await graphClient.Subscriptions[subscriptionId]
                     .PatchAsync(update, req =>
                     {
                         req.Options.WithAppOnly(isAppOnly);
                     });
 
-                _logger.LogInformation("Renewed subscription");
+                logger.LogInformation("Renewed subscription");
             }
         }
     }

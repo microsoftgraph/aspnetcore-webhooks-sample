@@ -2,9 +2,10 @@
 
 ## Setting up a new Azure Key Vault
 
-For official documentation on creating an Azure Key Vault, see [Quickstart: Create a key vault using the Azure portal](https://docs.microsoft.com/azure/key-vault/general/quick-create-portal).
+For official documentation on creating an Azure Key Vault, see [Quickstart: Create a key vault using the Azure portal](https://learn.microsoft.com/azure/key-vault/general/quick-create-portal).
 
-> **Note:** you only need to go through the following steps if you **do not** have an existing Azure Key Vault, or if you want to use a separate Azure Key Vault for this sample.
+> [!NOTE]
+> You only need to go through the following steps if you **do not** have an existing Azure Key Vault, or if you want to use a separate Azure Key Vault for this sample.
 
 1. Go to [Azure Portal](https://portal.azure.com/).
 

@@ -10,8 +10,6 @@ Make sure that your app registration includes the required permission for Micros
 
 If you're using ngrok, you can use the web interface [http://127.0.0.1:4040](http://127.0.0.1:4040) to see whether the notification is being received. If you're not using ngrok, monitor the network traffic using the tools your hosting service provides, or try using ngrok.
 
-If Microsoft Graph is not sending notifications, please open a [Stack Overflow](https://stackoverflow.com/questions/tagged/MicrosoftGraph) issue tagged `MicrosoftGraph`. Include the subscription ID and the time it was created.
-
 Known issue: Occasionally the notification is received, and the retrieved message is sent to NotificationService, but the SignalR client in this sample does not update. When this happens, it's usually the first notification after the subscription is created.
 
 ## You get a "Subscription validation request timed out" response

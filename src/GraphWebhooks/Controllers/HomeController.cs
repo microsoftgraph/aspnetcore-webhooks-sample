@@ -11,15 +11,8 @@ namespace GraphWebhooks.Controllers;
 /// <summary>
 /// The controller for the home page.
 /// </summary>
-public class HomeController : Controller
+public class HomeController() : Controller
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="HomeController"/> class.
-    /// </summary>
-    public HomeController()
-    {
-    }
-
     /// <summary>
     /// GET /.
     /// </summary>

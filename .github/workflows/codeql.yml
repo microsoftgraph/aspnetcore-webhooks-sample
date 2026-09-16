@@ -19,10 +19,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
       with:
         dotnet-version: 8.x
         
@@ -30,7 +30,7 @@ jobs:
       run: dotnet restore
       
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
       with:
         languages: csharp
 
@@ -38,4 +38,4 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0

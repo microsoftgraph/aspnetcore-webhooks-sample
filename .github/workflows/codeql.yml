@@ -30,7 +30,7 @@ jobs:
       run: dotnet restore
       
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
+      uses: github/codeql-action/init@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4.39.2
       with:
         languages: csharp
 
